@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-LMZ9M89QLD"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-LMZ9M89QLD');
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Attila Hajdu — UX &amp; AI Systems Designer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style type="text/css">
+    :root {
+      --bg: #080809;
+      --bg-end: #12141a;
+      --surface: #121318;
+      --surface-elevated: #181a22;
+      --text: #f0f1f4;
+      --subtext: #8b919c;
+      --accent: #00e7ff;
+      --accent-soft: rgba(0, 231, 255, 0.12);
+      --stamp-opacity: 0.12;
+      --radius: 12px;
+      --font: 'Poppins', sans-serif;
+      --section-gap: clamp(2.5rem, 4.5vw, 3.85rem);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: linear-gradient(155deg, var(--bg) 0%, var(--bg-end) 55%, #0a0c10 100%);
+      color: var(--text);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      position: relative;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      min-height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 90% 55% at 50% -15%, rgba(0, 231, 255, 0.08), transparent 52%),
+        radial-gradient(ellipse 50% 35% at 100% 30%, rgba(41, 98, 255, 0.06), transparent 50%),
+        repeating-linear-gradient(-12deg, transparent, transparent 48px, rgba(255, 255, 255, 0.018) 48px, rgba(255, 255, 255, 0.018) 49px);
+    }
+
+    body > * { position: relative; z-index: 1; }
+
+    section {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      text-align: center;
+    }
+
+    section + section { margin-top: var(--section-gap); }
+
+    section:not(.fullbleed):not(#hero) {
+      padding-top: clamp(1.65rem, 3.8vw, 2.35rem);
+      border-top: 1px solid rgba(255, 255, 255, 0.065);
+    }
+
+    section.section--wash {
+      background: rgba(255, 255, 255, 0.028);
+      border-top-color: rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding-bottom: 0.5rem;
+      overflow: hidden;
+    }
+
+    h1 {
+      font-weight: 700;
+      font-size: clamp(1.95rem, 4.8vw, 2.75rem);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin: 0 0 0.85rem;
+      color: #fafbfc;
+    }
+
+    h1.hero-title {
+      font-size: inherit;
+      font-weight: inherit;
+      line-height: inherit;
+      letter-spacing: inherit;
+      color: inherit;
+    }
+
+    .hero-title {
+      margin: 0 auto 0.85rem;
+      max-width: 100%;
+      padding: 0 0.25rem;
+      text-align: center;
+    }
+
+    .hero-title__headline {
+      display: block;
+      white-space: nowrap;
+      font-size: clamp(1.05rem, 4.6vw, 2.7rem);
+      font-weight: 700;
+      line-height: 1.11;
+      letter-spacing: -0.038em;
+      color: #fafbfc;
+    }
+
+    h2 {
+      font-weight: 700;
+      font-size: clamp(1.35rem, 2.8vw, 1.7rem);
+      letter-spacing: -0.02em;
+      margin: 0 0 1rem;
+      color: var(--text);
+    }
+
+    p {
+      color: var(--subtext);
+      font-size: 1rem;
+      margin: 0 0 1rem;
+      max-width: 52ch;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    p:last-child { margin-bottom: 0; }
+
+    .section-kicker {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin: 0 0 0.35rem;
+      opacity: 1;
+      display: block;
+    }
+
+    .section-kicker + h2 {
+      margin-top: 0;
+    }
+
+    /* Editorial column: same width as content-band cards */
+    section.section--editorial {
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: left;
+    }
+
+    section.section--editorial > .section-kicker,
+    section.section--editorial > h2 {
+      text-align: left;
+    }
+
+    section.section--editorial h2 {
+      margin-bottom: 0.75rem;
+    }
+
+    section#selected-impact.section--editorial > h2 {
+      margin-bottom: 1rem;
+    }
+
+    #practical-ai .practical-links {
+      justify-content: flex-start;
+      margin-top: 1.35rem;
+    }
+
+    #video-intro .lang-switcher {
+      justify-content: flex-start;
+    }
+
+    section.section--editorial > p:not(.section-kicker) {
+      margin-left: 0;
+      margin-right: 0;
+      max-width: 62ch;
+    }
+
+    #video-intro .meet-preface,
+    #video-intro .meet-preface--secondary {
+      margin-left: 0;
+      text-align: left;
+    }
+
+    #video-intro .section-kicker + .meet-preface {
+      margin-top: 0.5rem;
+    }
+
+    #video-intro .video-wrapper {
+      margin-left: 0;
+      margin-right: 0;
+    }
+
+    a.btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin: 0.4rem;
+      padding: 0.72rem 1.35rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #f2f2f4;
+      border-radius: var(--radius);
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-decoration: none;
+      transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    a.btn:hover {
+      background: var(--accent-soft);
+      border-color: rgba(0, 231, 255, 0.4);
+      color: #fff;
+      box-shadow: 0 0 20px rgba(0, 231, 255, 0.18);
+      transform: translateY(-1px);
+    }
+
+    a.btn:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(8, 9, 12, 0.95), 0 0 0 4px rgba(0, 231, 255, 0.55);
+    }
+
+    a.btn::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: radial-gradient(circle at 50% 0%, rgba(0, 231, 255, 0.1), transparent 65%);
+      pointer-events: none;
+    }
+
+    a.btn.btn--sm {
+      margin: 0;
+      padding: 0.5rem 0.85rem;
+      font-size: 0.8rem;
+      width: 100%;
+      justify-content: center;
+    }
+
+    a.btn.btn--gated { margin-top: auto; flex-shrink: 0; }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.35rem;
+      margin-top: 1.5rem;
+    }
+
+    .hero-identity {
+      margin: 0 auto 1.15rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.42rem;
+      text-align: center;
+    }
+
+    .hero-name {
+      font-size: clamp(1.12rem, 2.65vw, 1.32rem);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #dce0e6;
+      margin: 0;
+    }
+
+    .hero-role {
+      font-size: clamp(0.78rem, 1.75vw, 0.88rem);
+      font-weight: 600;
+      letter-spacing: 0.11em;
+      text-transform: none;
+      color: rgba(0, 231, 255, 0.82);
+      margin: 0;
+      line-height: 1.35;
+    }
+
+    #hero {
+      position: relative;
+      border-top: none;
+      padding-top: clamp(4rem, 11vh, 6.5rem);
+      padding-bottom: 0.25rem;
+    }
+
+    #hero::before {
+      content: '';
+      position: absolute;
+      top: 42%;
+      left: 50%;
+      width: 300px;
+      height: 300px;
+      transform: translate(-50%, -50%);
+      background-image: url('ati-logo-25.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      opacity: var(--stamp-opacity);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .hero-sub {
+      font-size: 0.98rem;
+      color: #9aa2ac;
+      max-width: 36ch;
+      margin: 0 auto 1.65rem;
+      font-weight: 500;
+      line-height: 1.55;
+    }
+
+    .impact-strip {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem 0.65rem;
+      max-width: 760px;
+      margin: 0 auto 2rem;
+      text-align: center;
+    }
+
+    @media (min-width: 640px) {
+      .impact-strip {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.85rem 0.75rem;
+      }
+    }
+
+    .impact-cell {
+      background: var(--surface-elevated);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius);
+      padding: 1rem 0.7rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+      border-top: 2px solid rgba(0, 231, 255, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 5.15rem;
+    }
+
+    .impact-cell::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(0, 231, 255, 0.06), transparent 55%);
+      pointer-events: none;
+    }
+
+    .impact-unit {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      width: 100%;
+      max-width: 10.5rem;
+    }
+
+    .impact-num {
+      font-size: clamp(1.12rem, 2.75vw, 1.42rem);
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+      color: #f0f2f5;
+    }
+
+    .impact-num em {
+      font-style: normal;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .impact-label {
+      font-size: clamp(0.62rem, 1.35vw, 0.72rem);
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #8e96a0;
+      line-height: 1.25;
+      max-width: 12rem;
+    }
+
+    @media (max-width: 380px) {
+      .impact-unit { max-width: none; }
+      .impact-label { letter-spacing: 0.06em; }
+    }
+
+    .lang-switcher {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+
+    .lang-btn {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--subtext);
+      padding: 0.55rem 1.2rem;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .lang-btn:hover {
+      background: rgba(0,231,255,0.15);
+      border-color: rgba(0,231,255,0.35);
+      color: #fff;
+      box-shadow: 0 0 10px rgba(0,231,255,0.25);
+    }
+
+    .lang-btn.active {
+      background: rgba(255,255,255,0.95);
+      color: #0c0c0c;
+      border-color: rgba(0,231,255,0.6);
+      box-shadow: 0 0 14px rgba(0,231,255,0.30), inset 0 1px 0 rgba(255,255,255,0.6);
+    }
+
+    .lang-btn::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: radial-gradient(circle at 50% -20%, rgba(0,231,255,0.10), transparent 65%);
+      pointer-events: none;
+    }
+
+    .lang-btn:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(11,12,14,0.9), 0 0 0 4px rgba(0,231,255,0.55);
+    }
+
+    [hidden] { display: none !important; }
+
+    .video-wrapper {
+      max-width: 700px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .video-wrapper video {
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+      display: block;
+      margin-top: 1rem;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    #portfolio-video { margin: 1.25rem auto 0; max-width: 700px; }
+    #portfolio-video video { margin-top: 0; }
+
+    section.timeline-bundle {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+      max-width: 720px;
+      margin-left: auto;
+      margin-right: auto;
+      padding-bottom: 0;
+    }
+
+    .fullbleed {
+      margin: clamp(2.25rem, 4vw, 3.25rem) 0;
+      width: 100%;
+      max-width: none;
+      padding: 0;
+      border-top: none;
+    }
+
+    .timeline-bundle .fullbleed {
+      margin: 0 calc(50% - 50vw) clamp(2.25rem, 4vw, 3.25rem);
+      width: 100vw;
+      max-width: 100vw;
+    }
+
+    .fullbleed .gif-wrap {
+      position: static;
+      width: 100%;
+      overflow: visible;
+      background: #0e0f12;
+    }
+
+    .fullbleed img.timeline-gif {
+      width: 100%;
+      height: auto;
+      display: block;
+      object-fit: contain;
+    }
+
+    .practical-links {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.65rem;
+      margin-top: 1.75rem;
+    }
+
+    @media (min-width: 520px) {
+      .practical-links { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+    }
+
+    .meet-preface {
+      font-size: 1rem;
+      color: var(--subtext);
+      max-width: 44ch;
+      margin: 0 auto 0.65rem;
+      font-weight: 500;
+    }
+
+    .meet-preface--secondary {
+      font-size: 0.92rem;
+      color: #8f96a0;
+      max-width: 44ch;
+      margin: 0 auto 1.35rem;
+      font-weight: 500;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    #selected-impact {
+      max-width: 1040px;
+      text-align: left;
+    }
+
+    #selected-impact > .section-kicker,
+    #selected-impact > h2 {
+      max-width: 1040px;
+      margin-left: 0;
+      margin-right: auto;
+      text-align: left;
+    }
+
+    #selected-impact > h2 {
+      margin-bottom: 1.15rem;
+      font-size: clamp(1.32rem, 2.6vw, 1.62rem);
+    }
+
+    #selected-impact > .section-kicker { margin-bottom: 0.5rem; }
+
+    .impact-blocks {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      text-align: left;
+      max-width: 1040px;
+      margin: 0 auto;
+    }
+
+    @media (min-width: 900px) {
+      .impact-blocks {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem 1.1rem;
+        align-items: stretch;
+      }
+    }
+
+    .impact-block {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      min-height: 100%;
+      background: var(--surface);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.15rem 1.25rem;
+      box-shadow: 0 10px 36px rgba(0, 0, 0, 0.38);
+      border-top: 2px solid rgba(0, 231, 255, 0.45);
+    }
+
+    .impact-block h3 {
+      font-size: 0.98rem;
+      font-weight: 700;
+      margin: 0 0 0.75rem;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      line-height: 1.3;
+    }
+
+    .impact-block ul {
+      flex: 1 1 auto;
+      min-height: 0;
+      margin: 0;
+      padding: 0 0 0 1.1rem;
+      color: var(--subtext);
+      font-size: 0.86rem;
+      line-height: 1.52;
+    }
+
+    .impact-block li { margin-bottom: 0.35rem; }
+    .impact-block li:last-child { margin-bottom: 0; }
+
+    #portfolio-2023 a {
+      color: #e8eaed;
+      font-weight: 600;
+      text-underline-offset: 3px;
+    }
+    #portfolio-2023 a:hover { color: var(--accent); }
+
+    .bullet-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 auto;
+      max-width: 38rem;
+      text-align: left;
+    }
+
+    .bullet-list li {
+      position: relative;
+      padding-left: 1.1rem;
+      margin-bottom: 0.55rem;
+      color: var(--subtext);
+      font-size: 0.95rem;
+    }
+
+    .bullet-list li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.55em;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: 0.85;
+    }
+
+    .ai-ethics-bullets {
+      text-align: left;
+      max-width: 32rem;
+      margin: 1rem auto 1.5rem;
+      padding: 0;
+      list-style: none;
+    }
+
+    .ai-ethics-bullets li {
+      color: var(--subtext);
+      font-size: 0.95rem;
+      margin-bottom: 0.5rem;
+      padding-left: 1.2rem;
+      position: relative;
+    }
+
+    .ai-ethics-bullets li::before {
+      content: "—";
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      opacity: 0.7;
+    }
+
+    section.content-band {
+      text-align: left;
+      max-width: 700px;
+      padding: clamp(1.5rem, 2.8vw, 1.85rem) clamp(1.4rem, 2.8vw, 1.75rem) clamp(1.75rem, 2.8vw, 2.1rem);
+      background: linear-gradient(168deg, rgba(20, 22, 32, 0.94) 0%, rgba(12, 13, 18, 0.75) 55%, rgba(10, 11, 16, 0.88) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 12px;
+      box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.38),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    section.content-band .section-kicker {
+      margin-bottom: 0.35rem;
+      color: var(--accent);
+      opacity: 1;
+    }
+
+    section.content-band h2 {
+      margin-bottom: 0.85rem;
+      color: #f2f3f6;
+      font-size: clamp(1.32rem, 2.6vw, 1.62rem);
+    }
+
+    section.content-band .pull-quote {
+      margin: 0.15rem 0 1.05rem;
+      padding: 0.85rem 0 0.85rem 1.1rem;
+      border-left: 3px solid rgba(0, 231, 255, 0.42);
+      font-size: clamp(1.06rem, 2.15vw, 1.3rem);
+      font-weight: 600;
+      line-height: 1.38;
+      letter-spacing: -0.02em;
+      color: #e9edf2;
+      font-style: normal;
+    }
+
+    #background.content-band > h2 { margin-bottom: 0.65rem; }
+
+    section.content-band .bullet-list--secondary {
+      margin: 0.75rem 0 0;
+      padding: 0.65rem 0 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    section.content-band .bullet-list--secondary li {
+      font-size: 0.82rem;
+      color: #7c848f;
+      margin-bottom: 0.4rem;
+    }
+
+    section.content-band .bullet-list--secondary li::before {
+      opacity: 0.45;
+      width: 4px;
+      height: 4px;
+    }
+
+    section.content-band p:not(.section-kicker) {
+      margin-left: 0;
+      margin-right: 0;
+      text-align: left;
+      max-width: none;
+      color: #9aa3ad;
+    }
+
+    section.content-band .bullet-list--primary {
+      margin: 0.65rem 0 0;
+      max-width: none;
+      padding: 0.35rem 0 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    section.content-band .ai-ethics-bullets {
+      margin: 0.75rem 0 0;
+      max-width: none;
+      padding: 0.35rem 0 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    section.content-band .ai-ethics-bullets li:last-child { margin-bottom: 0; }
+
+    section.content-band > .btn {
+      display: inline-flex;
+      margin: 1.35rem 0 0;
+    }
+
+    section.content-band .btn-row {
+      justify-content: flex-start;
+      margin-top: 1.25rem;
+    }
+
+    section.content-band #portfolio-video {
+      margin: 1.35rem 0 0;
+      max-width: 100%;
+    }
+
+    section.content-band #portfolio-video video { margin-top: 0; }
+
+    #final-cta p { margin-bottom: 1rem; }
+
+    section.content-band#final-cta {
+      margin-bottom: clamp(3rem, 9vh, 5.5rem);
+      padding-bottom: clamp(2rem, 4vw, 2.5rem);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .fullbleed img.timeline-gif { filter: grayscale(0.15) brightness(0.9); }
+      a.btn { transition: none; }
+    }
+
+    @media (max-width: 600px) {
+      .impact-strip { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<section id="hero" aria-label="Introduction">
+  <p class="hero-identity">
+    <span class="hero-name">Attila Hajdu</span>
+    <span class="hero-role">UX/AI strategy &amp; execution</span>
+  </p>
+  <h1 class="hero-title">
+    <span class="hero-title__headline">I make systems usable.</span>
+  </h1>
+  <p class="hero-sub">18 years leading UX across enterprise platforms, startups, and AI-driven products.</p>
+
+  <div class="impact-strip" role="list" aria-label="Selected outcomes">
+    <div class="impact-cell" role="listitem">
+      <div class="impact-unit">
+        <span class="impact-num"><em>42%</em></span>
+        <span class="impact-label">faster delivery</span>
+      </div>
+    </div>
+    <div class="impact-cell" role="listitem">
+      <div class="impact-unit">
+        <span class="impact-num"><em>+29%</em></span>
+        <span class="impact-label">task success</span>
+      </div>
+    </div>
+    <div class="impact-cell" role="listitem">
+      <div class="impact-unit">
+        <span class="impact-num">NPS <em>+26</em></span>
+        <span class="impact-label">improvement</span>
+      </div>
+    </div>
+    <div class="impact-cell" role="listitem">
+      <div class="impact-unit">
+        <span class="impact-num"><em>1–2</em> click</span>
+        <span class="impact-label">decision workflows</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <a class="btn" href="mailto:hello@hajduattila.com">Email Attila</a>
+    <a class="btn" href="https://www.linkedin.com/in/attila-hajdu/" target="_blank" rel="noopener">LinkedIn</a>
+  </div>
+</section>
+
+<section id="practical-ai" class="section--wash section--editorial" aria-label="Practical AI work">
+  <p class="section-kicker">AI in real-life</p>
+  <h2>Practical AI work</h2>
+  <p>Evidence, not slides: working products I built so product teams can see what they need to do under the EU AI Act—structured paths, not a wall of regulation.</p>
+  <div class="practical-links">
+    <a class="btn" href="https://eu-ai-act-compliance-navigator-961973332067.us-west1.run.app/" aria-label="Open the EU AI Act navigator (live tool)">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 3 6v6c0 5.25 3.9 10 9 11 5.1-1 9-5.75 9-11V6l-9-4z"/></svg>
+      EU AI Act navigator
+    </a>
+    <a class="btn" href="https://hajduattila.com/eu-ai-act" aria-label="Open the EU AI Act product guide">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 2H8a3 3 0 0 0-3 3v14a3 3 0 0 0 3 3h11V2zm-2 14H9v-2h8v2zm0-4H9V10h8v2zm0-4H9V6h8v2zM6 5a2 2 0 0 1 2-2h1v18H8a2 2 0 0 1-2-2V5z"/></svg>
+      EU AI Act guide
+    </a>
+  </div>
+</section>
+
+<section id="video-intro" class="section--wash section--editorial">
+  <p class="section-kicker">Interaction</p>
+  <p class="meet-preface">I experiment with AI not just as a tool, but as a system collaborator.</p>
+  <p class="meet-preface--secondary">This is part of how I explore scalable interaction between humans and AI systems.</p>
+  <h2>Meet my AI assistant</h2>
+  <p>I created a digital version of myself. Choose your language and have a quick listen:</p>
+
+  <div class="lang-switcher" role="tablist">
+    <button type="button" class="lang-btn active" data-lang="en" role="tab" aria-selected="true">English</button>
+    <button type="button" class="lang-btn" data-lang="fr" role="tab" aria-selected="false">Français</button>
+    <button type="button" class="lang-btn" data-lang="de" role="tab" aria-selected="false">Deutsch</button>
+    <button type="button" class="lang-btn" data-lang="es" role="tab" aria-selected="false">Español</button>
+    <button type="button" class="lang-btn" data-lang="zh" role="tab" aria-selected="false">中文</button>
+  </div>
+
+  <div class="video-wrapper" id="ai-avatar-videos">
+    <video controls id="video-en"><source src="/portfolio-ai-avatar-videos-2025/ai-atti-intro.mp4" type="video/mp4" /></video>
+    <video controls hidden id="video-fr"><source src="/portfolio-ai-avatar-videos-2025/fr-ai-atti-intro.mp4" type="video/mp4" /></video>
+    <video controls hidden id="video-de"><source src="/portfolio-ai-avatar-videos-2025/de-ai-atti-intro.mp4" type="video/mp4" /></video>
+    <video controls hidden id="video-es"><source src="/portfolio-ai-avatar-videos-2025/es-ai-atti-intro.mp4" type="video/mp4" /></video>
+    <video controls hidden id="video-zh"><source src="/portfolio-ai-avatar-videos-2025/cn-ai-atti-intro.mp4" type="video/mp4" /></video>
+  </div>
+</section>
+
+<section id="selected-impact" aria-label="Selected impact">
+  <p class="section-kicker">Evidence</p>
+  <h2>Selected impact</h2>
+
+  <div class="impact-blocks">
+    <article class="impact-block">
+      <h3>Clarity under complexity</h3>
+      <ul>
+        <li>Collapsed sprawling navigation into 1–2 click summaries for faster judgement</li>
+        <li>Designed for high-stakes decisions, not just screen throughput</li>
+        <li>Moved static UIs toward interactive, explainable flows</li>
+      </ul>
+      <a class="btn btn--sm btn--gated" href="mailto:hello@hajduattila.com?subject=Request%20breakdown%3A%20Complex%20SaaS">Request breakdown</a>
+    </article>
+
+    <article class="impact-block">
+      <h3>Design systems that scale</h3>
+      <ul>
+        <li>Took a design system to 95% coverage in 8 months</li>
+        <li>Cut front-end delivery time by 40%+</li>
+        <li>Raised velocity without sacrificing consistency</li>
+      </ul>
+      <a class="btn btn--sm btn--gated" href="mailto:hello@hajduattila.com?subject=Request%20breakdown%3A%20Design%20systems">Request breakdown</a>
+    </article>
+
+    <article class="impact-block">
+      <h3>AI in real products</h3>
+      <ul>
+        <li>Co-led Data, AI &amp; Automation initiatives</li>
+        <li>Shipped internal tools that shortened research and delivery loops</li>
+        <li>Designed guard-railed patterns for real-world AI use</li>
+      </ul>
+      <a class="btn btn--sm btn--gated" href="mailto:hello@hajduattila.com?subject=Request%20breakdown%3A%20AI%20in%20products">Request breakdown</a>
+    </article>
+  </div>
+</section>
+
+<section id="portfolio-2023" class="content-band" aria-label="Portfolio through 2023">
+  <p class="section-kicker">Archive</p>
+  <h2>Selected work through 2023</h2>
+  <p>There is substantial work behind this reel, up to 2023. Recent programmes are intentionally light in public: detail, trade-offs, and outcomes are something I walk through directly with teams.</p>
+  <p>For a private view of what I&rsquo;ve shipped since, <a href="mailto:hello@hajduattila.com">email Attila</a>.</p>
+  <div id="portfolio-video" class="video-wrapper video-wrapper--portfolio">
+    <video controls>
+      <source src="/portfolio-ai-avatar-videos-2025/attila_portfolio_2023.mp4" type="video/mp4" />
+      Your browser does not support HTML5 video.
+    </video>
+  </div>
+</section>
+
+<section id="ai-prototyping" class="content-band" aria-label="Rapid AI system prototyping">
+  <p class="section-kicker">Speed</p>
+  <h2>Rapid AI system prototyping</h2>
+  <p>In under 24 hours: a full AI ethics platform, from research to something people could actually use—deliberate proof of synthesis, systems thinking, and speed without abandoning rigour.</p>
+  <ul class="ai-ethics-bullets">
+    <li>200+ sources distilled into a coherent narrative</li>
+    <li>Multi-model workflow (ChatGPT, Gemini, and hand-offs in between)</li>
+    <li>Structured as a product, not a slide deck</li>
+  </ul>
+  <a class="btn" href="https://hajduattila.com/ai-ethics/" target="_blank" rel="noopener">Open AI ethics platform</a>
+</section>
+
+<section id="what-i-do" class="content-band" aria-label="What I do">
+  <p class="section-kicker">Focus</p>
+  <h2>What I do</h2>
+  <p>I work where AI, SaaS, and complex systems meet: product teams, founders, and businesses that need digital products to stay legible as they scale.</p>
+  <p>I turn fragmented workflows into clear, scalable experiences so people can make better decisions under pressure—not chase features.</p>
+</section>
+
+<section id="background" class="content-band" aria-label="Background">
+  <p class="section-kicker">Context</p>
+  <h2>Background</h2>
+  <ul class="bullet-list bullet-list--primary">
+    <li>18 years in UX and product design</li>
+    <li>Principal Product Designer, AI Systems @ Ethixbase360</li>
+    <li>Head of Design across multiple SaaS companies</li>
+  </ul>
+  <ul class="bullet-list bullet-list--secondary">
+    <li>University of Cambridge — Human-Computer Interaction for AI Systems Design (online), 2026</li>
+    <li>BSc computer engineering; MSc computer science education</li>
+  </ul>
+</section>
+
+<section id="approach" class="content-band" aria-label="Approach">
+  <p class="section-kicker">Principle</p>
+  <h2>Approach</h2>
+  <p class="pull-quote">Complexity is often a design failure dressed as sophistication.</p>
+  <p>I strip noise, harden usability, and build systems that behave when reality is messy—because that is where decisions actually happen.</p>
+</section>
+
+<section id="final-cta" class="content-band" aria-label="Work with me">
+  <p class="section-kicker">Private</p>
+  <h2>Work with me</h2>
+  <p>Depth lives off-site on purpose: case studies, metrics, and walkthroughs are shared in conversation, not as a public library.</p>
+  <p>If you&rsquo;re building or scaling something that needs to work under pressure, let&rsquo;s talk.</p>
+  <div class="btn-row">
+    <a class="btn" href="mailto:hello@hajduattila.com">Email Attila</a>
+    <a class="btn" href="https://www.linkedin.com/in/attila-hajdu/" target="_blank" rel="noopener">LinkedIn</a>
+  </div>
+</section>
+
+<section class="timeline-bundle" aria-label="AI is here timeline animation">
+  <div id="ai-timeline" class="fullbleed">
+    <div class="gif-wrap">
+      <img class="timeline-gif"
+           src="ai-is-here.gif"
+           alt="AI is here — evolutionary timeline animation"
+           loading="lazy" decoding="async" />
+    </div>
+  </div>
+</section>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const buttons = document.querySelectorAll('.lang-btn');
+    const videos = document.querySelectorAll('#ai-avatar-videos video');
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const lang = btn.getAttribute('data-lang');
+
+        buttons.forEach(b => {
+          const on = b === btn;
+          b.classList.toggle('active', on);
+          b.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+
+        videos.forEach(video => {
+          if (video.id === 'video-' + lang) {
+            video.removeAttribute('hidden');
+            video.play();
+          } else {
+            video.pause();
+            video.currentTime = 0;
+            video.setAttribute('hidden', '');
+          }
+        });
+      });
+    });
+  });
+</script>
+</body>
+</html>
