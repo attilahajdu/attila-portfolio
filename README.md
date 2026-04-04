@@ -7,7 +7,7 @@ Static single-page site (`index.html`). GitHub’s repository name cannot includ
 The page expects these paths next to `index.html`:
 
 - `ati-logo-25.png` — hero watermark
-- `ai-is-here.gif` — timeline section
+- `ai-is-here.png` — timeline section
 - `/portfolio-ai-avatar-videos-2025/` — intro and portfolio MP4s (match your server layout or update paths in HTML)
 
 ## Deploy
