@@ -1,0 +1,2866 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-C5DWLD0WT5"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-C5DWLD0WT5');
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drip · How much water did your AI use?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#070d16; --ink-2:#0c1522; --ink-3:#122033;
+  --line:rgba(140,190,230,.14); --line-2:rgba(140,190,230,.26);
+  --paper:#f4f6f8; --paper-ink:#16212e;
+  --text:#dce8f2; --text-dim:#8aa2b8; --text-faint:#5d7288;
+  --water:#41d3f0; --water-deep:#1888c9; --cyan-soft:rgba(65,211,240,.14);
+  --violet:#8f86f2; --amber:#e5a94a; --green:#46c98b;
+  --radius:18px;
+  --font-d:'Space Grotesk',system-ui,sans-serif;
+  --font-m:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--ink);color:var(--text);font-family:var(--font-d);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button{font-family:inherit;font-size:inherit;cursor:pointer;touch-action:manipulation}
+a{color:var(--water)}
+::selection{background:rgba(65,211,240,.3)}
+h1,h2,h3{line-height:1.15;font-weight:600;letter-spacing:-.01em}
+.wrap{max-width:1060px;margin:0 auto;padding:0 22px}
+.hidden{display:none !important}
+
+/* expert / everyday visibility */
+.xp{display:none}
+body.expert .xp{display:block}
+span.xp,td.xp,th.xp{display:none}
+body.expert span.xp{display:inline}
+body.expert td.xp,body.expert th.xp{display:table-cell}
+body.expert .ev-only{display:none}
+
+/* expert mode identity: violet accents, sticky banner under the header */
+#modeExpert.on{background:linear-gradient(160deg,#a89ff7,#6555e6);color:#0b0426}
+.expert-bar{display:none;align-items:center;gap:10px;font-family:var(--font-m);font-size:12px;letter-spacing:.05em;color:#cfc8ff;background:linear-gradient(90deg,rgba(143,134,242,.16),rgba(143,134,242,.05));border-top:1px solid rgba(143,134,242,.3);padding:7px 22px}
+.expert-bar b{font-weight:600;color:#e6e2ff}
+.expert-bar button{background:none;border:none;color:#a89ff7;font-family:var(--font-m);font-size:12px;text-decoration:underline;margin-left:auto;padding:2px 4px}
+body.expert .expert-bar{display:flex}
+body.expert header{border-bottom-color:rgba(143,134,242,.35)}
+
+/* highlighted expert notes */
+.xp-note{position:relative;margin-top:14px;font-size:14px;color:#cfd4f2;background:rgba(143,134,242,.08);border:1px solid rgba(143,134,242,.35);border-left:3px solid var(--violet);border-radius:0 12px 12px 0;padding:24px 16px 12px 16px;max-width:70ch}
+.xp-note::before{content:'🔬 EXPERT NOTE';position:absolute;top:8px;left:16px;font-family:var(--font-m);font-size:10px;letter-spacing:.16em;color:#a89ff7}
+.q-xnote{position:relative;font-family:var(--font-m);font-size:12.5px;color:#cfd4f2;margin:-14px 0 24px;background:rgba(143,134,242,.08);border:1px solid rgba(143,134,242,.35);border-left:3px solid var(--violet);border-radius:0 12px 12px 0;padding:26px 15px 11px 15px;line-height:1.8}
+.q-xnote::before{content:'🔬 EXPERT NOTE';position:absolute;top:9px;left:15px;font-size:10px;letter-spacing:.16em;color:#a89ff7}
+.xp-strip{border-color:rgba(143,134,242,.4) !important;position:relative;padding-top:26px !important}
+.xp-strip::before{content:'🔬 EXPERT DATA';position:absolute;top:8px;left:16px;font-size:10px;letter-spacing:.16em;color:#a89ff7}
+
+/* ---------- rain on glass (canvas) ---------- */
+#rain{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:1;transform:translateZ(0)}
+main,header,footer{position:relative;z-index:2}
+.rain-toggle{background:var(--ink-3);border:1px solid var(--line-2);border-radius:99px;height:34px;display:flex;align-items:center;gap:7px;padding:0 14px;font-size:13px;font-weight:600;color:var(--text-dim);white-space:nowrap;transition:opacity .2s,transform .2s,color .2s}
+.rain-toggle[aria-pressed="false"]{opacity:.55}
+.rain-toggle[aria-pressed="false"] .droplet-ico{filter:grayscale(1)}
+.rain-toggle:hover{transform:translateY(-1px);color:var(--text)}
+@media (max-width:640px){.rain-toggle span{display:none}.rain-toggle{padding:0 10px}}
+
+/* ---------- micro-interactions ---------- */
+.btn{position:relative;overflow:hidden}
+.btn::before{content:'';position:absolute;top:0;left:-70%;width:45%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);transition:left .55s ease}
+.btn:hover::before{left:135%}
+.btn:active,.opt:active,.quiz-opts button:active,.wi-opt:active,.try-card:active,.flow-branch:active{transform:scale(.975)}
+@keyframes optpop{0%{transform:scale(1)}45%{transform:scale(1.025)}100%{transform:scale(1)}}
+@keyframes optring{0%{box-shadow:0 0 0 0 rgba(65,211,240,.4)}100%{box-shadow:0 0 0 14px rgba(65,211,240,0)}}
+.opt.sel,.wi-opt.sel{animation:optpop .32s ease,optring .55s ease}
+.try-card,.prov-card,.rcard,.quiz-box{transition:border-color .2s,transform .2s,box-shadow .25s}
+.prov-card:hover,.rcard:hover,.quiz-box:hover{border-color:var(--line-2);box-shadow:0 8px 34px rgba(0,0,0,.28),0 0 0 1px rgba(65,211,240,.05)}
+.try-card:hover{box-shadow:0 10px 34px rgba(0,0,0,.32),0 0 22px rgba(65,211,240,.06)}
+@keyframes logodrip{0%,100%{transform:translateY(0)}40%{transform:translateY(2.5px) scaleY(1.06)}70%{transform:translateY(-.5px)}}
+.logo:hover svg{animation:logodrip .7s ease;transform-origin:top center}
+.exact-row input:focus{border-color:var(--water);box-shadow:0 0 0 3px rgba(65,211,240,.15);outline:none}
+.nav-links button{position:relative}
+.nav-links button::after{content:'';position:absolute;left:14%;right:14%;bottom:4px;height:2px;background:var(--water);border-radius:2px;transform:scaleX(0);transform-origin:left;transition:transform .25s ease,opacity .25s;opacity:0}
+.nav-links button:hover::after{transform:scaleX(1);opacity:.7}
+
+/* ---------- header ---------- */
+header{position:sticky;top:0;z-index:50;background:rgba(9,16,27,.96);border-bottom:1px solid var(--line)}
+.nav{display:flex;align-items:center;gap:18px;height:62px}
+.logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:18px;cursor:pointer;background:none;border:none;color:var(--text)}
+.nav-links{display:flex;gap:2px;margin-left:auto}
+.nav-links button{background:none;border:none;color:var(--text-dim);padding:8px 11px;border-radius:10px;font-size:15px;font-weight:500}
+.nav-links button:hover,.nav-links button:focus-visible{color:var(--text);background:var(--ink-3)}
+.nav-links button.active{color:var(--water)}
+button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--water);outline-offset:2px;border-radius:8px}
+/* mode toggle */
+.mode-toggle{display:flex;background:var(--ink-3);border:1px solid var(--line-2);border-radius:99px;padding:3px;gap:2px}
+.mode-toggle button{border:none;background:transparent;color:var(--text-dim);font-size:13px;font-weight:600;padding:5px 13px;border-radius:99px;transition:background .2s,color .2s}
+.mode-toggle button.on{background:linear-gradient(160deg,#4bd8f2,#1888c9);color:#04121c}
+.badge-tray{display:flex;gap:5px;font-size:17px;min-width:24px}
+.badge-tray span{filter:drop-shadow(0 0 6px rgba(65,211,240,.5));cursor:default}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);z-index:99;background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;padding:13px 20px;font-size:15px;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+#toast{pointer-events:none;cursor:pointer}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+#toast b{color:var(--water)}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;gap:9px;border-radius:14px;padding:14px 26px;font-weight:600;font-size:16.5px;border:1px solid transparent;transition:transform .15s,box-shadow .15s}
+.btn-primary{background:linear-gradient(160deg,#4bd8f2,#1888c9);color:#04121c;box-shadow:0 4px 26px rgba(65,211,240,.28)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 7px 32px rgba(65,211,240,.4)}
+.btn-ghost{background:transparent;border-color:var(--line-2);color:var(--text)}
+.btn-ghost:hover{background:var(--ink-3)}
+.btn-small{padding:9px 17px;font-size:14.5px;border-radius:11px}
+
+/* ---------- hero ---------- */
+.hero{padding:76px 0 44px;display:grid;grid-template-columns:1.1fr .9fr;gap:44px;align-items:center}
+.hero>*{min-width:0}
+.hero h1{font-size:clamp(38px,5.4vw,60px);font-weight:700;letter-spacing:-.025em}
+.hero h1 em{font-style:normal;color:var(--water)}
+.hero p.lead{margin:20px 0 14px;font-size:19px;color:var(--text-dim);max-width:46ch}
+.hero .hook{margin:0 0 30px;font-size:16px;color:var(--water);max-width:46ch;border-left:3px solid var(--water);padding-left:14px;font-style:italic}
+.hero-ctas{display:flex;gap:14px;flex-wrap:wrap}
+.mech{background:linear-gradient(175deg,var(--ink-2),#0a1424 70%);border:1px solid var(--line);border-radius:24px;padding:26px 24px 20px;position:relative;overflow:hidden}
+.mech-caption{font-size:12.5px;color:var(--text-faint);text-align:center;margin-top:10px}
+.chip{fill:#182a44;stroke:var(--violet);stroke-width:1.4}
+.chip-core{fill:var(--violet);opacity:.85}
+.mech-label{fill:var(--text-dim);font-size:11px;font-family:var(--font-d);letter-spacing:.06em}
+.mech-label.strong{fill:var(--text);font-size:11.5px;font-weight:600}
+.flow-line{stroke:var(--line-2);stroke-width:1.4;fill:none}
+.pulse-dot{fill:var(--water)}
+.heat{stroke:var(--amber);stroke-width:1.6;fill:none;opacity:.75}
+.coolant{stroke:var(--water);stroke-width:2;fill:none;stroke-dasharray:5 7}
+.elec{stroke:var(--violet);stroke-width:1.6;fill:none;stroke-dasharray:3 6;opacity:.8}
+@keyframes dashflow{to{stroke-dashoffset:-48}}
+@keyframes heatwave{0%,100%{opacity:.2;transform:translateY(0)}50%{opacity:.85;transform:translateY(-2px)}}
+@keyframes corepulse{0%,100%{opacity:.55}50%{opacity:1}}
+@keyframes twinkle{0%,100%{opacity:.08}50%{opacity:.65}}
+.vap{stroke:#a5e2f7;stroke-width:1.5;fill:none;opacity:.3}
+.anim .vap{animation:heatwave 2.4s ease-in-out infinite}
+.spore{opacity:.1}
+.anim .spore{animation:twinkle 3.6s ease-in-out infinite}
+.anim .coolant{animation:dashflow 2.6s linear infinite reverse}
+.anim .elec{animation:dashflow 3.4s linear infinite}
+.anim .heat{animation:heatwave 2.2s ease-in-out infinite}
+.anim .chip-core{animation:corepulse 2.2s ease-in-out infinite}
+
+/* ---------- sections ---------- */
+section{padding:64px 0}
+.eyebrow{font-family:var(--font-m);font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--water);margin-bottom:14px}
+.sec-title{font-size:clamp(28px,3.6vw,40px);margin-bottom:12px}
+.sec-sub{color:var(--text-dim);font-size:18px;max-width:60ch}
+
+/* try-one + quiz cards */
+.try-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-top:30px}
+.try-grid>*{min-width:0}
+.try-card{text-align:left;background:var(--ink-2);border:1px solid var(--line);border-radius:var(--radius);padding:20px;color:var(--text);transition:border-color .15s,transform .15s}
+.try-card:hover{border-color:var(--line-2);transform:translateY(-2px)}
+.try-card .ico{font-size:26px}
+.try-card b{display:block;margin:9px 0 3px;font-size:16.5px}
+.try-card span{color:var(--text-dim);font-size:14px}
+.try-result{margin-top:22px;background:var(--ink-2);border:1px solid var(--line);border-radius:var(--radius);padding:24px;display:none}
+.try-result.show{display:flex;gap:26px;align-items:center;flex-wrap:wrap}
+.try-steps{flex:1;min-width:220px}
+.try-step{display:flex;gap:11px;align-items:center;padding:5px 0;color:var(--text-dim);font-size:15px;opacity:0;transform:translateY(4px);transition:opacity .4s,transform .4s}
+.try-step.on{opacity:1;transform:none}
+.try-step .dot{width:8px;height:8px;border-radius:50%;background:var(--water);flex:none}
+.try-step.retry .dot{background:var(--amber)}
+.try-num{font-size:36px;font-weight:700}
+.try-num small{display:block;font-size:12.5px;color:var(--text-faint);font-weight:400;margin-top:3px}
+
+/* quiz */
+.quiz-box{background:var(--ink-2);border:1px solid var(--line);border-radius:var(--radius);padding:28px;margin-top:28px}
+.quiz-q{font-size:19px;font-weight:600;margin-bottom:4px}
+.quiz-prog{font-family:var(--font-m);font-size:12px;color:var(--text-faint);margin-bottom:16px}
+.quiz-opts{display:grid;gap:10px;grid-template-columns:1fr}
+.quiz-opts button{text-align:left;background:var(--ink);border:1.5px solid var(--line);border-radius:13px;padding:14px 17px;color:var(--text);font-size:16px;transition:border-color .12s}
+.quiz-opts button:hover{border-color:var(--line-2)}
+.quiz-opts button.right{border-color:var(--green);background:rgba(70,201,139,.08)}
+.quiz-opts button.wrong{border-color:#c96a4a;background:rgba(200,110,80,.07)}
+.quiz-reveal{margin-top:14px;font-size:15px;color:var(--text-dim);border-left:3px solid var(--water);padding:10px 15px;background:var(--cyan-soft);border-radius:0 12px 12px 0}
+.quiz-score{font-size:24px;font-weight:700;margin-top:6px}
+
+/* explainer scenes */
+.scene{display:grid;grid-template-columns:64px 1fr;gap:22px;background:var(--ink-2);border:1px solid var(--line);border-radius:var(--radius);padding:26px;margin-top:16px}
+.scene>*{min-width:0}
+.scene-n{font-family:var(--font-m);color:var(--water);font-size:15px;border:1px solid var(--line-2);border-radius:12px;height:44px;width:44px;display:flex;align-items:center;justify-content:center}
+.scene h3{font-size:20px;margin-bottom:7px}
+.scene p{color:var(--text-dim);font-size:16px;max-width:66ch}
+.scene .mini{margin-top:13px;font-family:var(--font-m);font-size:13px;color:var(--text-faint);background:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px 16px;display:inline-block;line-height:1.9;max-width:100%;overflow-x:auto}
+.scene .mini .w{color:var(--water)} .scene .mini .h{color:var(--amber)} .scene .mini .v{color:var(--violet)}
+.merge-strip{margin-top:22px;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;background:var(--ink-2);border:1px solid var(--line-2);border-radius:var(--radius);padding:22px;font-weight:600;font-size:17px}
+.merge-strip .plus,.merge-strip .eq{color:var(--text-faint);font-weight:400}
+.merge-strip .b1{color:var(--water)} .merge-strip .b2{color:var(--violet)} .merge-strip .b3{color:var(--text)}
+
+/* provider explorer */
+.prov-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px;margin-top:28px}
+.prov-grid>*{min-width:0}
+.prov-card{background:var(--ink-2);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+.prov-card h3{font-size:17.5px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.ev-badge{font-size:11.5px;font-family:var(--font-m);padding:4px 10px;border-radius:99px;font-weight:500;white-space:nowrap}
+.ev-strong{background:rgba(70,201,139,.14);color:var(--green);border:1px solid rgba(70,201,139,.35)}
+.ev-partial{background:rgba(229,169,74,.12);color:var(--amber);border:1px solid rgba(229,169,74,.35)}
+.ev-weak{background:var(--ink-3);color:var(--text-dim);border:1px solid var(--line-2)}
+.prov-card ul{list-style:none;margin-top:13px;font-size:14.5px}
+.prov-card li{padding:3.5px 0;color:var(--text-dim)}
+.k-yes{color:var(--green);margin-right:7px}.k-no{color:var(--text-faint);margin-right:7px}.k-est{color:var(--amber);margin-right:7px}
+
+/* references */
+.ref-list{list-style:none;counter-reset:ref;margin-top:26px}
+.ref-list li{counter-increment:ref;display:grid;grid-template-columns:44px 1fr;gap:14px;padding:15px 0;border-bottom:1px solid var(--line);font-size:15px;color:var(--text-dim)}
+.ref-list li>*{min-width:0}
+.ref-list li::before{content:'['counter(ref)']';font-family:var(--font-m);color:var(--water);font-size:13.5px;padding-top:2px}
+.ref-list b{color:var(--text);font-weight:500}
+.ref-list .ref-note{display:block;font-size:13.5px;color:var(--text-faint);margin-top:3px}
+.disclaimer{margin-top:34px;background:var(--ink-2);border:1px solid var(--line);border-radius:var(--radius);padding:24px;font-size:14px;color:var(--text-faint);line-height:1.75}
+.disclaimer b{color:var(--text-dim)}
+
+/* ---------- calculator ---------- */
+.calc-shell{min-height:calc(100vh - 62px);display:flex;flex-direction:column;padding:34px 0 60px}
+.calc-top{display:flex;align-items:center;gap:16px;margin-bottom:34px;flex-wrap:wrap}
+.progress{display:flex;gap:7px;margin-left:auto}
+.progress i{width:9px;height:9px;border-radius:50%;background:var(--ink-3);border:1px solid var(--line-2)}
+.progress i.done{background:var(--water);border-color:var(--water)}
+.calc-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:44px;align-items:start;flex:1}
+.calc-grid>*{min-width:0}
+.q-title{font-size:clamp(26px,3.4vw,36px);margin-bottom:10px}
+.q-help{color:var(--text-dim);font-size:16.5px;margin-bottom:26px;max-width:52ch}
+.q-xnote{font-family:var(--font-m);font-size:12.5px;color:var(--text-faint);margin:-14px 0 24px;border-left:2px solid var(--violet);padding-left:12px;line-height:1.8}
+.opt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.opt-grid>*{min-width:0}
+.opt{text-align:left;background:var(--ink-2);border:1.5px solid var(--line);border-radius:15px;padding:17px 19px;color:var(--text);font-size:16.5px;font-weight:500;transition:border-color .12s,background .12s;min-height:58px}
+.opt:hover{border-color:var(--line-2)}
+.opt.sel{border-color:var(--water);background:rgba(65,211,240,.07)}
+.opt .ico{margin-right:11px;font-size:19px}
+.opt small{display:block;color:var(--text-dim);font-weight:400;font-size:13.5px;margin-top:3px}
+.calc-nav{display:flex;gap:12px;margin-top:32px}
+.exact-row{margin-top:16px}
+.exact-row input{background:var(--ink-2);border:1.5px solid var(--line-2);border-radius:12px;color:var(--text);padding:12px 15px;font-size:16px;width:160px;font-family:var(--font-d)}
+.vessel-panel{position:sticky;top:88px;background:var(--ink-2);border:1px solid var(--line);border-radius:var(--radius);padding:24px;text-align:center;min-width:0}
+.vessel-panel .vp-label{font-size:13px;color:var(--text-faint);margin-top:12px;line-height:1.5}
+.building{font-family:var(--font-m);font-size:13.5px;color:var(--text-dim)}
+.building .bdots::after{content:'…'}
+@keyframes vripple{0%{box-shadow:0 0 0 0 rgba(65,211,240,.35)}100%{box-shadow:0 0 0 22px rgba(65,211,240,0)}}
+.vessel-panel.ripple{animation:vripple .7s ease-out}
+
+/* about page */
+.about-wrap{padding:34px 0 0}
+.about-top{display:flex;align-items:flex-start;gap:18px;justify-content:space-between;flex-wrap:wrap;margin-bottom:8px}
+.about-sec{padding:26px 0;border-top:1px solid var(--line)}
+.about-sec h2{font-size:20px;margin-bottom:12px}
+.about-sec p{color:var(--text-dim);font-size:16.5px;max-width:72ch;margin-bottom:12px}
+.about-sec p:last-child{margin-bottom:0}
+.linkish{background:none;border:none;color:var(--water);text-decoration:underline;padding:0;font-size:inherit;font-family:inherit}
+.linkish:hover{color:#7fe4fa}
+@media (max-width:640px){.about-wrap{padding-top:18px}.about-sec p{font-size:15.5px}}
+
+/* slosh + celebration + hacks */
+@keyframes slosh{0%,100%{transform:rotate(0)}25%{transform:rotate(1.6deg) translateY(-1px)}75%{transform:rotate(-1.4deg) translateY(1px)}}
+html:not(.is-scrolling) #resVessel:hover .vessel-water-wrap,html:not(.is-scrolling) .vessel-panel:hover .vessel-water-wrap{animation:slosh 1.1s ease-in-out infinite;transform-origin:50% 100%}
+#guessVerdict.win{animation:vripple .9s ease-out}
+.hack-list{margin-top:18px;display:grid;gap:10px}
+.hack{display:flex;gap:12px;align-items:baseline;background:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px 15px;font-size:14.5px;flex-wrap:wrap}
+.hack .h-save{margin-left:auto;font-family:var(--font-m);font-size:12px;color:var(--green);white-space:nowrap}
+.iter-box{margin-top:14px;background:var(--ink);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.iter-box label{font-size:14px;color:var(--text-dim);display:block;margin-bottom:8px}
+.iter-box input{width:100%;accent-color:var(--water)}
+.iter-read{font-family:var(--font-m);font-size:13px;margin-top:8px;color:var(--text)}
+
+/* about overlay */
+.about-panel{max-width:800px;margin:0 auto;background:var(--ink-2);border:1px solid var(--line-2);border-radius:20px;padding:36px 34px;position:relative}
+.about-panel h2{font-size:30px;margin-bottom:6px}
+.about-panel h3{font-size:18px;margin:26px 0 8px;color:var(--water)}
+.about-panel p{font-size:15.5px;color:var(--text-dim);margin-top:10px}
+.about-close{position:sticky;top:0;float:right;background:var(--ink-3);border:1px solid var(--line-2);border-radius:99px;width:38px;height:38px;color:var(--text);font-size:17px;line-height:1}
+.about-close:hover{border-color:var(--water)}
+.about-meta{font-family:var(--font-m);font-size:12px;color:var(--text-faint);margin-top:4px}
+footer button.linklike{background:none;border:none;color:var(--water);padding:0;font-size:13.5px;text-decoration:underline;cursor:pointer}
+@media (max-width:640px){.about-panel{padding:26px 20px}}
+
+/* building-your-estimate card */
+.calc-card{max-width:560px;margin:22px auto;background:var(--ink-2);border:1px solid var(--line);border-radius:var(--radius);padding:26px 26px 20px;position:relative;overflow:hidden}
+.calc-card::before{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 32%,rgba(65,211,240,.06) 50%,transparent 68%);transform:translateX(-100%);animation:scan 1.5s ease-in-out infinite;pointer-events:none}
+@keyframes scan{to{transform:translateX(100%)}}
+.calc-card .mech-mini{margin:0 auto 20px;max-width:340px}
+.cstep-list{border-top:1px solid var(--line);padding-top:8px}
+.cstep{display:flex;gap:14px;align-items:flex-start;padding:10px 0;opacity:.3;transition:opacity .25s}
+.cstep.active,.cstep.done{opacity:1}
+.cstate{width:20px;height:20px;flex:none;position:relative;margin-top:2px}
+.cspin{position:absolute;inset:0;border-radius:50%;border:2px solid var(--line-2);border-top-color:var(--water);opacity:0}
+.cstep.active .cspin{opacity:1;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ctick{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--green);font-family:var(--font-m);font-size:13px;opacity:0;transform:scale(.5)}
+.cstep.done .ctick{opacity:1;transform:scale(1);transition:opacity .2s,transform .25s cubic-bezier(.3,1.6,.5,1)}
+.cstep.done .cspin{opacity:0}
+.cbody b{display:block;font-size:15.5px}
+.cbody span{font-size:13.5px;color:var(--text-dim)}
+.calc-bar{height:6px;border-radius:99px;background:var(--ink-3);margin-top:14px;overflow:hidden}
+.calc-bar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--water-deep),var(--water));animation:fillbar .95s cubic-bezier(.3,.7,.4,1) forwards}
+@keyframes fillbar{to{width:100%}}
+.calc-foot{margin-top:12px;font-family:var(--font-m);font-size:10.5px;color:var(--text-faint);text-align:center;letter-spacing:.12em}
+
+/* templates, skip link, mini diagram */
+.tmpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.tmpl-grid>*{min-width:0}
+.tmpl{text-align:left;background:var(--ink-2);border:1.5px dashed var(--line-2);border-radius:13px;padding:13px 15px;color:var(--text);font-size:15px;transition:border-color .12s}
+.tmpl:hover{border-color:var(--water);border-style:solid}
+.tmpl small{display:block;color:var(--text-dim);font-size:12.5px;margin-top:3px}
+.tmpl-note{font-size:12.5px;color:var(--text-faint);margin-top:10px}
+.skip-row{margin-top:16px}
+.skip-row .linkish{font-size:14px;color:var(--text-dim)}
+.skip-row .linkish:hover{color:var(--water)}
+.mech-mini{max-width:380px;margin:34px auto 6px;opacity:.95}
+.calcing{margin-top:26px}
+
+/* collapsible analysis cards */
+details.fold summary{list-style:none;cursor:pointer;font-size:19px;font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:12px}
+details.fold summary::-webkit-details-marker{display:none}
+details.fold summary::after{content:'+';font-family:var(--font-m);font-size:18px;color:var(--water);flex:none;transition:transform .2s}
+details.fold[open] summary::after{content:'–'}
+details.fold .fold-body{margin-top:16px}
+#foldMeth summary{font-size:15.5px;font-weight:500;color:var(--water)}
+@media (max-width:640px){
+  #resVessel svg{max-width:140px;height:auto}
+  details.fold summary{font-size:17px}
+}
+
+/* review screen */
+.rev-list{display:flex;flex-direction:column;gap:10px;max-width:580px}
+.rev-row{display:flex;align-items:center;gap:14px;text-align:left;background:var(--ink-2);border:1.5px solid var(--line);border-radius:13px;padding:13px 16px;color:var(--text);font-size:15.5px;transition:border-color .12s;min-width:0}
+.rev-row:hover{border-color:var(--water)}
+.rev-q{color:var(--text-dim);flex:0 0 128px;font-size:13.5px}
+.rev-a{flex:1;font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rev-edit{font-family:var(--font-m);font-size:11px;color:var(--water);letter-spacing:.1em;text-transform:uppercase}
+@media (max-width:640px){.rev-q{flex-basis:104px}}
+
+/* calculating transition */
+.calcing{max-width:460px;margin:70px auto;font-size:16px}
+.calcing .step{display:flex;gap:12px;align-items:baseline;padding:9px 0;color:var(--text-faint);opacity:.35;transition:opacity .3s}
+.calcing .step.on{opacity:1;color:var(--text)}
+.calcing .step .tick{color:var(--green);font-family:var(--font-m)}
+
+/* vessel svg */
+.vessel-svg{display:block;margin:0 auto}
+.vessel-glass{fill:rgba(160,215,240,.05);stroke:rgba(170,220,245,.5);stroke-width:2}
+.vessel-water{fill:url(#waterGrad)}
+.vessel-surface{stroke:rgba(220,250,255,.75);stroke-width:1.6;fill:none}
+.vessel-tick-label{fill:var(--text-faint);font-size:9.5px;font-family:var(--font-m)}
+@keyframes rise{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.anim .vessel-water-wrap{transform-origin:bottom;animation:rise 1.2s cubic-bezier(.3,.8,.3,1)}
+
+/* ---------- result ---------- */
+.result-hero{padding:52px 0 26px;text-align:center}
+.result-kicker{font-size:14.5px;color:var(--text-dim);letter-spacing:.03em;margin-bottom:8px}
+.result-num{font-size:clamp(58px,10vw,104px);font-weight:700;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.result-num .approx{color:var(--text-faint);font-weight:400;margin-right:6px;font-size:.55em;vertical-align:.28em}
+.result-range{margin-top:16px;font-size:17px;color:var(--text-dim)}
+.badges{display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+.badge{font-size:14px;padding:7px 14px;border-radius:99px;border:1px solid var(--line-2);background:var(--ink-2);display:inline-flex;gap:8px;align-items:center}
+.badge .sym{font-family:var(--font-m)}
+.conf-high .sym{color:var(--green)} .conf-medium .sym{color:var(--amber)} .conf-low .sym{color:#e07856}
+.result-plain{max-width:58ch;margin:22px auto 0;color:var(--text-dim);font-size:16.5px}
+.xp-strip{font-family:var(--font-m);font-size:12.5px;color:var(--text-faint);margin:16px auto 0;max-width:640px;background:var(--ink-2);border:1px solid var(--line);border-radius:12px;padding:12px 16px;line-height:2;overflow-x:auto}
+.guess-verdict{margin:18px auto 0;max-width:420px;background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;padding:14px 20px;font-size:15.5px}
+.guess-verdict.win{border-color:rgba(70,201,139,.5)}
+.range-band{max-width:520px;margin:26px auto 0}
+.range-track{height:8px;border-radius:99px;background:var(--ink-3);position:relative}
+.range-fill{position:absolute;height:100%;border-radius:99px;background:linear-gradient(90deg,rgba(229,169,74,.35),rgba(65,211,240,.8),rgba(229,169,74,.35))}
+.range-mid{position:absolute;top:-5px;width:3px;height:18px;background:var(--water);border-radius:2px}
+.range-labels{display:flex;justify-content:space-between;font-family:var(--font-m);font-size:12px;color:var(--text-faint);margin-top:8px}
+.result-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-top:44px}
+.result-cards>*{min-width:0}
+.rcard{background:var(--ink-2);border:1px solid var(--line);border-radius:var(--radius);padding:26px;min-width:0}
+.rcard h3{font-size:19px;margin-bottom:16px}
+.rcard.full{grid-column:1/-1}
+.bk-row{margin:13px 0}
+.bk-head{display:flex;justify-content:space-between;gap:10px;font-size:15px;margin-bottom:6px}
+.bk-head b{font-weight:500}
+.bk-head span{color:var(--text-dim);font-family:var(--font-m);font-size:13px;white-space:nowrap}
+.bk-bar{height:11px;border-radius:99px;background:var(--ink-3);overflow:hidden}
+.bk-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--water-deep),var(--water))}
+.bk-fill.retry{background:linear-gradient(90deg,#a97a2e,var(--amber))}
+.insight{margin-top:18px;padding:14px 17px;border-left:3px solid var(--water);background:var(--cyan-soft);border-radius:0 12px 12px 0;font-size:15.5px}
+/* split flow (fixed: panel lives outside the buttons, full width) */
+.split-flow{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
+.split-flow>*{min-width:0}
+.flow-branch{background:var(--ink);border:1px solid var(--line);border-radius:14px;padding:18px;text-align:center;cursor:pointer;transition:border-color .15s}
+.flow-branch:hover{border-color:var(--line-2)}
+.flow-branch.open{border-color:var(--water)}
+.flow-branch .fb-ico{font-size:22px}
+.flow-branch b{display:block;margin:8px 0 2px;font-size:15.5px}
+.flow-branch .fb-num{font-family:var(--font-m);font-size:20px;color:var(--water);margin-top:4px}
+.flow-detail{margin-top:12px;background:var(--ink);border:1px solid var(--line-2);border-radius:14px;padding:16px 18px;font-size:14.5px;color:var(--text-dim);display:none}
+.flow-detail.show{display:block}
+.flow-detail code{font-family:var(--font-m);font-size:12.5px;color:var(--violet);display:block;margin-top:8px}
+.flow-total{text-align:center;margin-top:14px;font-size:15px;color:var(--text-dim)}
+.flow-total b{color:var(--text);font-family:var(--font-m);font-size:18px}
+/* keu */
+.keu{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.keu>*{min-width:0}
+.keu-col{background:var(--ink);border:1px solid var(--line);border-radius:14px;padding:17px}
+.keu-col h4{font-size:14px;margin-bottom:10px;display:flex;gap:8px;align-items:center}
+.keu-col ul{list-style:none;font-size:14px;color:var(--text-dim)}
+.keu-col li{padding:3px 0}
+.keu-know h4{color:var(--green)} .keu-est h4{color:var(--amber)} .keu-unk h4{color:var(--text-faint)}
+.keu-note{margin-top:14px;font-size:15px;color:var(--text-dim);font-style:italic}
+/* comparisons */
+.cmp-row{display:flex;gap:14px;overflow-x:auto;padding:6px 2px 12px}
+.cmp{flex:none;background:var(--ink);border:1px solid var(--line);border-radius:14px;padding:18px;text-align:center;min-width:170px}
+.cmp .c-ico{font-size:30px}
+.cmp b{display:block;margin-top:9px;font-size:15px}
+.cmp small{color:var(--text-faint);font-size:12px;display:block;margin-top:5px}
+/* what if */
+.wi-opts{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.wi-opt{background:var(--ink);border:1.5px solid var(--line);border-radius:12px;padding:10px 16px;color:var(--text);font-size:15px}
+.wi-opt.sel{border-color:var(--water);background:rgba(65,211,240,.07)}
+.wi-compare{display:grid;grid-template-columns:1fr auto 1fr;gap:18px;align-items:center;text-align:center}
+.wi-compare>*{min-width:0}
+.wi-cell .wi-lab{color:var(--text-faint);letter-spacing:.04em;text-transform:uppercase;font-family:var(--font-m);font-size:11.5px}
+.wi-cell .wi-num{font-size:32px;font-weight:700;margin-top:6px}
+.wi-delta{font-family:var(--font-m);font-size:15px;color:var(--green);background:rgba(70,201,139,.1);border:1px solid rgba(70,201,139,.3);padding:9px 14px;border-radius:12px;white-space:nowrap}
+.wi-delta.worse{color:var(--amber);background:rgba(229,169,74,.08);border-color:rgba(229,169,74,.3)}
+.wi-note{margin-top:16px;font-size:13.5px;color:var(--text-faint)}
+/* methodology */
+.meth-step{border-top:1px solid var(--line);padding:16px 0}
+.meth-step:first-child{border-top:none}
+.meth-step h4{font-size:16px;display:flex;gap:10px}
+.meth-step h4 .n{color:var(--water);font-family:var(--font-m);font-size:13px;margin-top:2px}
+.meth-step p{font-size:14.5px;color:var(--text-dim);margin-top:6px}
+.table-scroll{overflow-x:auto;margin-top:14px;border:1px solid var(--line);border-radius:12px}
+.coef-table{width:100%;min-width:640px;border-collapse:collapse;font-family:var(--font-m);font-size:12px}
+.coef-table th{text-align:left;color:var(--text-faint);font-weight:400;padding:8px 10px;border-bottom:1px solid var(--line-2);white-space:nowrap}
+.coef-table td{padding:9px 10px;border-bottom:1px solid var(--line);color:var(--text-dim);vertical-align:top}
+.coef-table tr:last-child td{border-bottom:none}
+.coef-table td:first-child{color:var(--text)}
+.grade{font-family:var(--font-m);font-weight:500}
+.grade-A{color:var(--green)} .grade-B{color:var(--water)} .grade-C{color:var(--amber)} .grade-D{color:#e07856}
+details.meth{margin-top:10px}
+details.meth summary{cursor:pointer;color:var(--water);font-size:15px;padding:6px 0}
+.src-list{list-style:none;margin-top:14px;font-size:13.5px}
+.src-list li{padding:7px 0;border-bottom:1px solid var(--line);color:var(--text-dim)}
+.src-list li b{color:var(--text);font-weight:500}
+.src-list .refn{font-family:var(--font-m);color:var(--water);margin-right:8px}
+.est-json{font-family:var(--font-m);font-size:12px;color:var(--text-dim);background:var(--ink);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:14px;white-space:pre-wrap;word-break:break-word}
+/* receipt */
+.receipt-wrap{display:flex;justify-content:center;padding:10px 0 30px}
+.receipt{background:var(--paper);color:var(--paper-ink);width:min(420px,100%);border-radius:14px;padding:30px 28px;font-family:var(--font-m);font-size:13.5px;box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.06)}
+.receipt .r-head{text-align:center;letter-spacing:.2em;font-weight:600;font-size:13px}
+.receipt .r-sub{text-align:center;color:#5d6b7a;margin-top:6px;font-size:12px}
+.receipt hr{border:none;border-top:1.5px dashed #c6ccd3;margin:16px 0}
+.receipt .r-line{display:flex;justify-content:space-between;gap:12px;padding:4.5px 0}
+.receipt .r-line span:last-child{font-weight:500;white-space:nowrap}
+.receipt .r-line.dim{color:#7c8896}
+.receipt .r-total{text-align:center;margin:4px 0}
+.receipt .r-total .t-num{font-family:var(--font-d);font-size:44px;font-weight:700;letter-spacing:-.02em}
+.receipt .r-total .t-range{font-size:12px;color:#5d6b7a;margin-top:4px}
+.receipt .r-conf{text-align:center;font-size:12px;margin-top:8px}
+.receipt .r-foot{text-align:center;color:#8b95a1;font-size:11px;margin-top:14px;line-height:1.7}
+.result-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:34px 0 60px}
+
+/* tuner, density, challenge */
+.tuner-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}
+.tuner-grid>*{min-width:0}
+.tuner-item label{display:flex;justify-content:space-between;gap:10px;font-family:var(--font-m);font-size:12.5px;color:var(--text-dim);margin-bottom:8px}
+.tuner-item .tv{color:#a89ff7}
+.tuner-item input[type=range]{width:100%;accent-color:var(--water)}
+.tuner-read{margin-top:16px;font-family:var(--font-m);font-size:13px;background:rgba(143,134,242,.08);border:1px solid rgba(143,134,242,.35);border-radius:12px;padding:13px 16px;line-height:2;overflow-x:auto}
+.tuner-read b{color:var(--water)}
+.tuner-read .delta-down{color:var(--green)} .tuner-read .delta-up{color:var(--amber)}
+.kde-leg{display:flex;gap:16px;flex-wrap:wrap;font-family:var(--font-m);font-size:12px;color:var(--text-faint);margin-top:10px}
+.kde-leg b{color:var(--text-dim);font-weight:500}
+#challenge{margin:26px 0 4px;background:linear-gradient(135deg,rgba(65,211,240,.1),rgba(143,134,242,.08));border:1px solid var(--line-2);border-radius:var(--radius);padding:22px 24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+#challenge .ch-ico{font-size:30px}
+#challenge .ch-body{flex:1;min-width:220px}
+#challenge b{color:var(--water)}
+#challenge .ch-sub{font-size:13.5px;color:var(--text-faint);margin-top:4px}
+
+footer{border-top:1px solid var(--line);padding:36px 0 48px;color:var(--text-faint);font-size:13.5px;line-height:1.8}
+footer .wrap>div{margin-top:8px}
+
+@media (max-width:880px){
+  .hero{grid-template-columns:1fr;padding-top:44px}
+  .calc-grid{grid-template-columns:1fr}
+  .vessel-panel{position:static;order:-1;display:flex;align-items:center;gap:18px;text-align:left;padding:16px 20px}
+  .vessel-panel .vessel-svg{width:64px;height:auto;margin:0}
+  .split-flow{grid-template-columns:1fr}
+  .wi-compare{grid-template-columns:1fr;gap:10px}
+  .scene{grid-template-columns:1fr;gap:10px}
+  .nav{gap:10px}
+  .nav-links button{padding:8px 8px;font-size:14px}
+}
+/* phones: one-column fast-tap flow, everything within thumb reach */
+@media (max-width:640px){
+  body{font-size:16px}
+  .wrap{padding:0 16px}
+  .nav{flex-wrap:wrap;height:auto;padding:10px 0;row-gap:8px}
+  .logo{font-size:16px}
+  .mode-toggle{margin-left:auto}
+  .mode-toggle button{padding:4px 10px;font-size:12px}
+  .rain-toggle{height:30px}
+  .badge-tray{font-size:15px}
+  .nav-links{order:10;width:100%;margin-left:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .nav-links::-webkit-scrollbar{display:none}
+  .nav-links button{white-space:nowrap;font-size:13.5px;padding:6px 10px}
+  .expert-bar{font-size:10.5px;padding:6px 14px;flex-wrap:wrap;gap:6px}
+  .hero{padding-top:26px;gap:24px}
+  .hero p.lead{font-size:17px}
+  .hero .hook{font-size:15px}
+  .hero-ctas .btn{width:100%;justify-content:center}
+  section{padding:42px 0}
+  .sec-sub{font-size:16px}
+  .scene{padding:20px}
+  .quiz-box{padding:20px}
+  .calc-shell{padding-top:16px;min-height:auto}
+  .calc-top{margin-bottom:16px;gap:10px}
+  .progress{display:none}
+  .q-title{font-size:23px}
+  .q-help{font-size:15.5px;margin-bottom:18px}
+  .q-xnote{margin-top:0}
+  .opt-grid{grid-template-columns:1fr;gap:10px}
+  .opt{min-height:54px;padding:15px 17px}
+  .calc-nav{position:sticky;bottom:12px;z-index:5;margin-top:20px}
+  .calc-nav .btn{width:100%;justify-content:center;box-shadow:0 10px 34px rgba(0,0,0,.55)}
+  .vessel-panel{padding:10px 14px;gap:12px;border-radius:14px}
+  .vessel-panel .vessel-svg{width:38px}
+  .vessel-panel .vp-label{margin-top:0;font-size:12px;text-align:left;line-height:1.45}
+  .result-hero{padding:34px 0 16px}
+  .result-cards{gap:12px;margin-top:24px}
+  .rcard{padding:20px}
+  .receipt{padding:24px 20px}
+  .result-actions .btn{width:100%;justify-content:center}
+  #toast{max-width:92vw;text-align:center;font-size:14px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important}
+  html{scroll-behavior:auto}
+  #rain{display:none}
+}
+</style>
+</head>
+<body>
+<canvas id="rain" aria-hidden="true"></canvas>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<header>
+  <div class="wrap nav">
+    <button class="logo" onclick="go('home')" aria-label="Drip, home">
+      <svg width="22" height="26" viewBox="0 0 22 26" aria-hidden="true"><path d="M11 1C11 1 3 11.5 3 17a8 8 0 0 0 16 0C19 11.5 11 1 11 1Z" fill="none" stroke="#41d3f0" stroke-width="2"/><path d="M6.5 17.5a4.5 4.5 0 0 0 4.5 4.5" fill="none" stroke="#41d3f0" stroke-width="1.6" opacity=".6"/></svg>
+      Drip
+    </button>
+    <div class="badge-tray" id="badgeTray" title="Badges you have unlocked this session"></div>
+    <button class="rain-toggle" id="rainToggle" aria-pressed="true" onclick="toggleRain()">💧 <span id="rainToggleTxt">Turn off droplets</span></button>
+    <div class="mode-toggle" role="group" aria-label="Explanation depth">
+      <button id="modeEveryday" class="on" onclick="setMode('everyday')">Everyday</button>
+      <button id="modeExpert" onclick="setMode('expert')">Expert</button>
+    </div>
+    <nav class="nav-links" aria-label="Main">
+      <button data-nav="home" onclick="go('home')">Home</button>
+      <button data-nav="calc" onclick="startCalc()">Calculate</button>
+      <button onclick="go('home');setTimeout(()=>document.getElementById('learn').scrollIntoView(),50)">Learn</button>
+      <button onclick="go('home');setTimeout(()=>document.getElementById('refs').scrollIntoView(),50)">References</button>
+    </nav>
+  </div>
+  <div class="expert-bar"><b>EXPERT MODE</b> formulas, distributions and estimator paths visible <button onclick="setMode('everyday')">switch to everyday</button></div>
+</header>
+
+<!-- ============================ HOME ============================ -->
+<main id="view-home">
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <h1>How much water did your <em>AI task</em> use?</h1>
+        <p class="lead">See the estimated water footprint behind your chats, images, videos, coding and AI projects. Simple answer, serious science, complete transparency.</p>
+        <p class="hook">A ten-second AI video can out-drink a hundred chats. Most people guess wrong. Think you won't?</p>
+        <div class="hero-ctas">
+          <button class="btn btn-primary" onclick="startCalc()">Calculate my AI task</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('learn').scrollIntoView()">See how AI uses water</button>
+        </div>
+      </div>
+      <div class="mech anim" id="mech" aria-label="Diagram: a prompt reaches an AI chip, the chip produces heat, a cooling system rejects that heat and can consume water. Separately, generating the electricity that powers the chip can also consume water.">
+        <svg viewBox="0 0 420 320" width="100%" role="img" aria-hidden="true" id="mechSvg">
+          <defs>
+            <linearGradient id="heroRim" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="rgba(220,246,255,.95)"/>
+              <stop offset=".5" stop-color="rgba(120,200,240,.4)"/>
+              <stop offset="1" stop-color="rgba(65,211,240,.75)"/>
+            </linearGradient>
+            <linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#54ddf5" stop-opacity=".95"/>
+              <stop offset="100%" stop-color="#1476b8" stop-opacity=".95"/>
+            </linearGradient>
+            <linearGradient id="chipTopG" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#2a4a70"/><stop offset="100%" stop-color="#10203a"/>
+            </linearGradient>
+            <linearGradient id="chipFrontG" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#152640"/><stop offset="100%" stop-color="#0a1526"/>
+            </linearGradient>
+            <linearGradient id="chipSideG" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#0e1c31"/><stop offset="100%" stop-color="#060e1b"/>
+            </linearGradient>
+            <radialGradient id="coreG">
+              <stop offset="0%" stop-color="#c8f6ff"/><stop offset="45%" stop-color="#41d3f0"/><stop offset="100%" stop-color="#41d3f0" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="ambG">
+              <stop offset="0%" stop-color="#41d3f0" stop-opacity=".13"/><stop offset="100%" stop-color="#41d3f0" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="ambV">
+              <stop offset="0%" stop-color="#8f86f2" stop-opacity=".11"/><stop offset="100%" stop-color="#8f86f2" stop-opacity="0"/>
+            </radialGradient>
+            <filter id="glo" x="-80%" y="-80%" width="260%" height="260%">
+              <feGaussianBlur stdDeviation="2.2" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="glo2" x="-80%" y="-80%" width="260%" height="260%">
+              <feGaussianBlur stdDeviation="5" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+
+          <!-- ambient bioluminescent glow -->
+          <ellipse cx="205" cy="80" rx="175" ry="92" fill="url(#ambG)"/>
+          <ellipse cx="205" cy="245" rx="150" ry="72" fill="url(#ambV)"/>
+
+          <!-- drifting spores -->
+          <circle class="spore" cx="52" cy="130" r="2" fill="#7fe9ff" style="animation-delay:0s"/>
+          <circle class="spore" cx="356" cy="52" r="1.6" fill="#7fe9ff" style="animation-delay:.9s"/>
+          <circle class="spore" cx="330" cy="222" r="2.2" fill="#8f86f2" style="animation-delay:1.7s"/>
+          <circle class="spore" cx="66" cy="150" r="1.5" fill="#7fe9ff" style="animation-delay:2.4s"/>
+          <circle class="spore" cx="386" cy="150" r="1.8" fill="#7fe9ff" style="animation-delay:3.1s"/>
+          <circle class="spore" cx="120" cy="34" r="1.5" fill="#8f86f2" style="animation-delay:1.3s"/>
+
+          <!-- prompt travelling in -->
+          <text x="18" y="52" class="mech-label">YOUR PROMPT</text>
+          <line x1="18" y1="66" x2="148" y2="66" class="flow-line"/>
+          <circle r="3.4" fill="#a5f1ff" filter="url(#glo)">
+            <animateMotion dur="2.8s" repeatCount="indefinite" path="M18 66 H148"/>
+          </circle>
+
+          <!-- isometric AI chip -->
+          <g>
+            <polygon points="210,110 270,96 270,101 210,115" fill="#04090f" opacity=".55"/>
+            <polygon points="150,56 210,42 270,56 210,70" fill="url(#chipTopG)" stroke="rgba(143,134,242,.45)" stroke-width="1"/>
+            <polygon points="150,56 210,70 210,110 150,96" fill="url(#chipFrontG)" stroke="rgba(143,134,242,.2)" stroke-width=".7"/>
+            <polygon points="210,70 270,56 270,96 210,110" fill="url(#chipSideG)" stroke="rgba(143,134,242,.2)" stroke-width=".7"/>
+            <ellipse class="chip-core" cx="210" cy="56" rx="26" ry="9" fill="url(#coreG)" filter="url(#glo2)"/>
+            <polygon points="192,54 210,50 228,54 210,58" fill="#dffaff" opacity=".9"/>
+            <line x1="158" y1="99" x2="158" y2="106" stroke="#41d3f0" stroke-width="1.4" opacity=".5"/>
+            <line x1="170" y1="102" x2="170" y2="109" stroke="#41d3f0" stroke-width="1.4" opacity=".5"/>
+            <line x1="182" y1="104" x2="182" y2="111" stroke="#41d3f0" stroke-width="1.4" opacity=".5"/>
+            <text x="150" y="128" class="mech-label strong">AI CHIP</text>
+          </g>
+
+          <!-- heat rising from the top face -->
+          <path d="M244 40 q6 -6 12 0 q6 6 12 0" class="heat"/>
+          <path d="M248 28 q6 -6 12 0 q6 6 12 0" class="heat" style="animation-delay:.55s"/>
+          <path d="M252 16 q6 -6 12 0 q6 6 12 0" class="heat" style="animation-delay:1.1s"/>
+          <text x="286" y="30" class="mech-label" fill="#e5a94a">HEAT</text>
+
+          <!-- glass cooling pipe with bioluminescent flow -->
+          <path d="M272 76 H332 V142 H212 V182" stroke="rgba(160,220,250,.10)" stroke-width="9" fill="none" stroke-linecap="round"/>
+          <path d="M272 76 H332 V142 H212 V182" class="coolant"/>
+          <circle r="3.2" fill="#8feaff" filter="url(#glo)">
+            <animateMotion dur="4.2s" repeatCount="indefinite" path="M212 182 V142 H332 V76 H272"/>
+          </circle>
+          <circle r="2.4" fill="#8feaff" filter="url(#glo)" opacity=".85">
+            <animateMotion dur="4.2s" begin="1.5s" repeatCount="indefinite" path="M212 182 V142 H332 V76 H272"/>
+          </circle>
+          <circle r="2.8" fill="#c4f4ff" filter="url(#glo)" opacity=".7">
+            <animateMotion dur="4.2s" begin="2.9s" repeatCount="indefinite" path="M212 182 V142 H332 V76 H272"/>
+          </circle>
+          <!-- cooling unit: housing on the pipe, spinning fan, vapour rising -->
+          <rect x="312" y="88" width="40" height="40" rx="7" fill="#12233c" stroke="rgba(65,211,240,.5)" stroke-width="1.2"/>
+          <g>
+            <path d="M332 108 L332 95 M332 108 L343.3 114.5 M332 108 L320.7 114.5" stroke="#7fdcf5" stroke-width="2.4" stroke-linecap="round"/>
+            <animateTransform attributeName="transform" type="rotate" values="0 332 108;360 332 108" dur="2.6s" repeatCount="indefinite"/>
+          </g>
+          <circle cx="332" cy="108" r="3" fill="#0b1626" stroke="#7fdcf5" stroke-width="1.4"/>
+          <path d="M337 80 q5 -5 10 0 q5 5 10 0" class="vap"/>
+          <path d="M341 70 q5 -5 10 0 q5 5 10 0" class="vap" style="animation-delay:.7s"/>
+          <text x="358" y="104" class="mech-label strong">COOLING</text>
+          <text x="358" y="118" class="mech-label strong">SYSTEM</text>
+
+          <!-- electricity generation: wind turbine + generator block feeding the riser -->
+          <text x="56" y="206" class="mech-label" fill="#8f86f2">ELECTRICITY</text>
+          <text x="56" y="220" class="mech-label" fill="#8f86f2">GENERATION</text>
+          <line x1="80" y1="300" x2="172" y2="300" stroke="rgba(140,190,230,.22)" stroke-width="1.4"/>
+          <line x1="92" y1="300" x2="92" y2="246" stroke="rgba(170,200,230,.55)" stroke-width="2"/>
+          <g>
+            <path d="M92 246 L92 229 M92 246 L106.7 254.5 M92 246 L77.3 254.5" stroke="#cfd8ff" stroke-width="2.2" stroke-linecap="round"/>
+            <animateTransform attributeName="transform" type="rotate" values="0 92 246;360 92 246" dur="6.5s" repeatCount="indefinite"/>
+          </g>
+          <circle cx="92" cy="246" r="2.6" fill="#0b1626" stroke="#cfd8ff" stroke-width="1.3"/>
+          <rect x="128" y="272" width="34" height="28" rx="4" fill="#171a33" stroke="rgba(143,134,242,.55)" stroke-width="1.2"/>
+          <polygon points="147,278 141,288 146,288 143,295 151,284 146,284" fill="#b7aefc"/>
+          <line x1="92" y1="286" x2="128" y2="286" stroke="rgba(143,134,242,.4)" stroke-width="1.3"/>
+          <path d="M158 100 V286 H162" class="elec"/>
+          <circle r="2.4" fill="#b7aefc" filter="url(#glo)">
+            <animateMotion dur="3s" repeatCount="indefinite" path="M158 286 V100"/>
+          </circle>
+          <circle r="1.9" fill="#d5cfff" filter="url(#glo)" opacity=".8">
+            <animateMotion dur="3s" begin="1.4s" repeatCount="indefinite" path="M158 286 V100"/>
+          </circle>
+
+          <!-- luminous tumbler: glowing water body, lit wave surface, rim light -->
+          <g transform="translate(178,190)">
+            <ellipse cx="32" cy="104" rx="30" ry="5" fill="#04090f" opacity=".55"/>
+            <ellipse cx="32" cy="66" rx="34" ry="30" fill="#41d3f0" opacity=".16" filter="url(#glo2)"/>
+            <path d="M4 0 h56 l-7 84 a10 10 0 0 1 -10 9 h-22 a10 10 0 0 1 -10 -9 Z" stroke="#41d3f0" stroke-width="1.2" fill="none" opacity=".4" filter="url(#glo2)"/>
+            <path d="M4 0 h56 l-7 84 a10 10 0 0 1 -10 9 h-22 a10 10 0 0 1 -10 -9 Z" fill="rgba(12,26,44,.55)" stroke="url(#heroRim)" stroke-width="1.6"/>
+            <clipPath id="heroCup"><path d="M6 1 h52 l-6.8 83 a9 9 0 0 1 -9 8 h-20.4 a9 9 0 0 1 -9 -8 Z"/></clipPath>
+            <g clip-path="url(#heroCup)">
+              <g class="vessel-water-wrap">
+                <g>
+                  <path d="M-11 40 q2.75 -1.7 5.5 0 q2.75 1.7 5.5 0 q2.75 -1.7 5.5 0 q2.75 1.7 5.5 0 q2.75 -1.7 5.5 0 q2.75 1.7 5.5 0 q2.75 -1.7 5.5 0 q2.75 1.7 5.5 0 q2.75 -1.7 5.5 0 q2.75 1.7 5.5 0 q2.75 -1.7 5.5 0 q2.75 1.7 5.5 0 q2.75 -1.7 5.5 0 q2.75 1.7 5.5 0 L66 96 L-11 96 Z" fill="url(#waterGrad)">
+                    <animateTransform attributeName="transform" type="translate" values="0 0;-11 0" dur="3.2s" repeatCount="indefinite"/>
+                  </path>
+                </g>
+                <rect x="-11" y="40" width="88" height="14" fill="rgba(190,246,255,.35)"/>
+                <g>
+                  <path d="M-11 40 q2.75 -1.7 5.5 0 q2.75 1.7 5.5 0 q2.75 -1.7 5.5 0 q2.75 1.7 5.5 0 q2.75 -1.7 5.5 0 q2.75 1.7 5.5 0 q2.75 -1.7 5.5 0 q2.75 1.7 5.5 0 q2.75 -1.7 5.5 0 q2.75 1.7 5.5 0 q2.75 -1.7 5.5 0 q2.75 1.7 5.5 0 q2.75 -1.7 5.5 0 q2.75 1.7 5.5 0" fill="none" stroke="#d9f8ff" stroke-width="1.5" filter="url(#glo)">
+                    <animateTransform attributeName="transform" type="translate" values="0 0;-11 0" dur="3.2s" repeatCount="indefinite"/>
+                  </path>
+                </g>
+              </g>
+              <path d="M13 8 q-2 34 1 70" stroke="rgba(255,255,255,.3)" stroke-width="3" stroke-linecap="round" fill="none"/>
+              <ellipse cx="46" cy="7" rx="7" ry="2.2" fill="rgba(255,255,255,.35)"/>
+            </g>
+            <circle cx="22" r="1.8" fill="rgba(180,244,255,.6)">
+              <animate attributeName="cy" values="86;48" dur="3.4s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0;.7;0" dur="3.4s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="34" r="1.3" fill="rgba(180,244,255,.6)">
+              <animate attributeName="cy" values="88;47" dur="4.3s" begin="1.1s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0;.6;0" dur="4.3s" begin="1.1s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="44" r="1.5" fill="rgba(180,244,255,.6)">
+              <animate attributeName="cy" values="85;49" dur="3.9s" begin="2s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0;.65;0" dur="3.9s" begin="2s" repeatCount="indefinite"/>
+            </circle>
+            <line x1="12" y1="8" x2="14" y2="80" stroke="rgba(255,255,255,.22)" stroke-width="2.4" stroke-linecap="round"/>
+          </g>
+          <text x="256" y="252" class="mech-label strong">WATER DRAWN</text>
+          <text x="256" y="266" class="mech-label strong">AND CONSUMED</text>
+          <text x="256" y="288" class="mech-label" fill="#41d3f0">≈ estimated, per task</text>
+        </svg>
+        <div class="mech-caption">Two mechanisms: cooling water at the data centre, and water consumed generating the electricity. Simplified illustration.</div>
+      </div>
+    </div>
+
+    <div id="challenge" class="hidden"></div>
+
+    <!-- try one -->
+    <section>
+      <div class="eyebrow">Try one</div>
+      <h2 class="sec-title">Pick an everyday AI task</h2>
+      <p class="sec-sub">Watch how a task turns into an estimate, including the versions people throw away. Iteration has a footprint.</p>
+      <div class="try-grid">
+        <button class="try-card" onclick="runDemo('chat')"><span class="ico">💬</span><b>A long AI chat</b><span>~30 back-and-forth responses</span></button>
+        <button class="try-card" onclick="runDemo('image')"><span class="ico">🖼️</span><b>10 AI images</b><span>a few versions before choosing</span></button>
+        <button class="try-card" onclick="runDemo('video')"><span class="ico">🎬</span><b>A 10-second AI video</b><span>with a couple of retries</span></button>
+        <button class="try-card" onclick="runDemo('coding')"><span class="ico">💻</span><b>An afternoon of AI coding</b><span>regular back-and-forth</span></button>
+      </div>
+      <div class="try-result" id="tryResult" aria-live="polite">
+        <div class="try-steps" id="trySteps"></div>
+        <div>
+          <div class="try-num" id="tryNum"></div>
+          <div style="margin-top:12px">
+            <button class="btn btn-small btn-primary" id="tryCta" onclick="startFromDemoTask()">Calculate mine</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- water sense quiz -->
+    <section>
+      <div class="eyebrow">Play</div>
+      <h2 class="sec-title">Test your Water Sense</h2>
+      <p class="sec-sub">Three quick questions. Most people get at least one surprise.</p>
+      <div class="quiz-box" id="quizBox"></div>
+    </section>
+
+    <!-- explainer -->
+    <section id="learn">
+      <div class="eyebrow">Learn</div>
+      <h2 class="sec-title">Wait. Why does AI need water?</h2>
+      <p class="sec-sub">The AI itself doesn't drink water. The infrastructure running it can.</p>
+      <div class="scene">
+        <div class="scene-n">1</div>
+        <div>
+          <h3>AI runs on powerful computers</h3>
+          <p>When you send a prompt, it usually travels to a large data centre, a building full of racks of specialised chips built to run AI models very fast.</p>
+          <div class="mini">your device → data centre → server rack → <span class="v">AI chip</span></div>
+          <p class="xp xp-note">For large models, most serving energy is drawn by AI accelerators (TPUs or GPUs), with host CPUs, memory, idle provisioning and facility overhead adding roughly 40 to 60 percent on top of active-chip energy in production measurements [1].</p>
+        </div>
+      </div>
+      <div class="scene">
+        <div class="scene-n">2</div>
+        <div>
+          <h3>Computation produces heat</h3>
+          <p>Powerful chips generate a lot of heat while running AI models, thousands of calculations happening at once. That heat has to go somewhere.</p>
+          <div class="mini"><span class="v">chip working</span> → <span class="h">heat rising</span></div>
+        </div>
+      </div>
+      <div class="scene">
+        <div class="scene-n">3</div>
+        <div>
+          <h3>That heat must be removed</h3>
+          <p>Data centres don't all cool themselves the same way. Air cooling uses little water. Closed liquid loops recirculate. Evaporative cooling deliberately evaporates water to carry heat away, and that water is consumed. Which system served <em>your</em> request is usually not disclosed, and that is one of the biggest reasons our results are ranges rather than exact numbers.</p>
+          <div class="mini">air cooling · closed liquid loop · <span class="w">evaporative cooling (consumes water)</span></div>
+          <p class="xp xp-note">The standard metric is WUE, water usage effectiveness, in litres per kWh of IT energy. Published fleet averages range from roughly 0.3 to 1.6 L/kWh across hyperscale operators, and individual sites vary far more [8]. We model WUE as a distribution, never a single number, and we only ever use consumptive WUE, never withdrawal figures.</p>
+        </div>
+      </div>
+      <div class="scene">
+        <div class="scene-n">4</div>
+        <div>
+          <h3>Electricity can consume water too</h3>
+          <p>Zoom out from the data centre and you reach the electricity grid. Many power stations, especially thermal ones, consume water for their own cooling while generating electricity. So even a data centre that uses little cooling water can still carry an upstream water footprint.</p>
+          <div class="mini">data centre → grid → <span class="v">power generation</span> → <span class="w">water consumption</span></div>
+          <p class="xp xp-note">Consumptive water intensity of generation varies by technology, from near zero for wind and solar PV to several litres per kWh for some thermal and hydro accounting methods [7]. We model a grid-average distribution and treat it as the largest single upstream unknown after model energy.</p>
+        </div>
+      </div>
+      <div class="merge-strip">
+        <span class="b1">Direct cooling water</span><span class="plus">+</span>
+        <span class="b2">Electricity-related water</span><span class="eq">=</span>
+        <span class="b3">Operational water footprint</span>
+      </div>
+      <p style="margin-top:16px;color:var(--text-faint);font-size:14px">We report the operational footprint only. Manufacturing chips and building data centres also use water, but the uncertainty is far larger, so we never silently mix it into the headline number. And the water doesn't vanish: evaporated cooling water rejoins the water cycle, just often somewhere other than where it was drawn.</p>
+    </section>
+
+    <!-- evidence explorer -->
+    <section id="evidence">
+      <div class="eyebrow">Evidence explorer</div>
+      <h2 class="sec-title">What providers actually disclose</h2>
+      <p class="sec-sub">Every estimate in this product traces back to a public source. Here is the honest state of the evidence, as of August 2026.</p>
+      <div class="prov-grid" id="provGrid"></div>
+    </section>
+
+    <!-- references -->
+    <section id="refs">
+      <div class="eyebrow">References</div>
+      <h2 class="sec-title">Where the numbers come from</h2>
+      <p class="sec-sub">Every coefficient used by the calculator cites one of these sources by number. If we couldn't trace a value, we didn't use it.</p>
+      <ol class="ref-list" id="refList"></ol>
+      <div class="disclaimer">
+        <b>Independence and fair-use notice.</b> Drip is an independent educational estimator. It is not affiliated with, endorsed by, or sponsored by Google, OpenAI, Anthropic, Microsoft, Midjourney, Kuaishou, ByteDance, MiniMax, Alibaba, Runway, Luma, Pika, Black Forest Labs, Adobe, xAI, Mistral AI or any other company named. Product names are used only to identify the services people describe, and all trademarks remain the property of their respective owners.
+        <br><br>
+        <b>Nature of the figures.</b> Every number shown is a modelled estimate derived from the published sources listed above, combined under stated assumptions. No figure is a measurement of any company's actual systems, and no figure should be read as a claim about the real consumption of any specific provider, facility or request. Where a provider has published its own measurements, we say so and cite them; where it has not, we extrapolate from independent peer-reviewed research and label the result with a lower evidence grade and a wider range. Corrections are welcome and the methodology is versioned so historical results never silently change.
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- ============================ CALCULATOR ============================ -->
+<main id="view-calc" class="hidden">
+  <div class="wrap calc-shell">
+    <div class="calc-top">
+      <button class="btn btn-small btn-ghost" onclick="calcBack()" id="backBtn">← Back</button>
+      <div style="color:var(--text-faint);font-size:14px" id="calcCrumb">About your task</div>
+      <div class="progress" id="progress" aria-label="Progress"></div>
+    </div>
+    <div class="calc-grid">
+      <div id="qArea"></div>
+      <aside class="vessel-panel" id="vesselPanel" aria-live="polite">
+        <div id="sideVessel"></div>
+        <div class="vp-label" id="sideVesselLabel"><span class="building">Building your estimate<span class="bdots"></span></span></div>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<!-- ============================ RESULT ============================ -->
+<main id="view-result" class="hidden">
+  <div class="wrap">
+    <div class="result-hero">
+      <div class="result-kicker">Estimated water footprint <span class="xp" style="color:var(--text-faint)">(operational boundary: inference only, training and manufacturing excluded)</span></div>
+      <div class="result-num" id="resNum"></div>
+      <div id="resVessel" style="margin-top:26px"></div>
+      <div class="guess-verdict hidden" id="guessVerdict"></div>
+      <div class="result-range" id="resRange"></div>
+      <div class="range-band">
+        <div class="range-track" id="rangeTrack"></div>
+        <div class="range-labels"><span id="rlP10"></span><span>best estimate</span><span id="rlP90"></span></div>
+      </div>
+      <div class="badges" id="resBadges"></div>
+      <p class="result-plain" id="resPlain"></p>
+      <p class="result-plain xp" id="resPlainXp" style="font-family:var(--font-m);font-size:13px;color:var(--text-faint)"></p>
+      <div class="xp-strip xp" id="xpStrip"></div>
+      <div style="margin-top:22px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-ghost" onclick="openMethodology()">How was this calculated?</button>
+        <button class="btn btn-ghost" onclick="adjustAnswers()">Adjust my answers</button>
+      </div>
+    </div>
+
+    <div class="result-cards">
+      <div class="rcard full" id="cmpCard">
+        <h3 id="cmpTitle"></h3>
+        <div class="cmp-row" id="cmpRow"></div>
+        <div style="font-size:12.5px;color:var(--text-faint)">Household water volumes shown for scale, not lifecycle footprints. AI did not literally flush a toilet.</div>
+      </div>
+
+      <div class="rcard full">
+        <h3>Your AI Water Receipt</h3>
+        <div class="receipt-wrap"><div class="receipt" id="receipt"></div></div>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+          <button class="btn btn-small btn-primary" onclick="shareReceipt()" id="shareBtn">📤 Share my receipt</button>
+          <button class="btn btn-small btn-ghost" onclick="downloadShareCard()" id="cardBtn">Download image</button>
+          <button class="btn btn-small btn-ghost" onclick="copyChallenge()" id="chBtn">Copy challenge link</button>
+        </div>
+      </div>
+
+      <div class="rcard full">
+        <h3>⚡ Pro tips for faster, greener AI</h3>
+        <p style="font-size:14.5px;color:var(--text-dim);margin-bottom:14px">Clever optimisers get the same output for less water, and usually faster too. Savings marked ≈ are computed live from your own answers by the same engine.</p>
+        <div class="wi-opts" id="wiOpts"></div>
+        <div class="wi-compare" id="wiCompare"></div>
+        <div class="wi-note" id="wiNote"></div>
+        <div class="hack-list" id="hackList"></div>
+        <div id="iterBox"></div>
+      </div>
+
+      <div class="rcard">
+        <details class="fold"><summary>What used the most water?</summary><div class="fold-body">
+        <div id="bkArea"></div>
+        <div class="insight" id="bkInsight"></div></div></details>
+      </div>
+
+      <div class="rcard">
+        <details class="fold"><summary>Where did the water go?</summary><div class="fold-body">
+        <div class="split-flow">
+          <button class="flow-branch" id="brCool" onclick="toggleBranch('cool')">
+            <span class="fb-ico">❄️</span><b>Data-centre cooling</b>
+            <div class="fb-num" id="fbCool"></div>
+          </button>
+          <button class="flow-branch" id="brElec" onclick="toggleBranch('elec')">
+            <span class="fb-ico">⚡</span><b>Electricity production</b>
+            <div class="fb-num" id="fbElec"></div>
+          </button>
+        </div>
+        <div class="flow-detail" id="fdCool">
+          Heat from the chips is rejected by the cooling system. Evaporative systems consume water directly; closed loops and air cooling consume far less. We modelled a range of plausible cooling systems because providers rarely disclose which one served your request [8].
+          <code class="xp">W_direct = E_IT × WUE_consumptive &nbsp;·&nbsp; WUE sampled per scenario, consumptive boundary only</code>
+        </div>
+        <div class="flow-detail" id="fdElec">
+          Generating the electricity that powered the computation can consume water upstream, especially at thermal power stations. This depends heavily on the regional grid mix, which we modelled as a distribution rather than a single number [6][7].
+          <code class="xp">W_electricity = E_IT × PUE × grid_water_intensity &nbsp;·&nbsp; consumptive L/kWh, sampled per scenario</code>
+        </div>
+        <div class="flow-total">Together: <b id="fbTotal"></b> estimated operational footprint · tap a branch to see why</div></div></details>
+      </div>
+
+      <div class="rcard full">
+        <details class="fold"><summary>Why isn't this exact?</summary><div class="fold-body">
+        <div class="keu">
+          <div class="keu-col keu-know"><h4>✓ We know</h4><ul id="keuKnow"></ul></div>
+          <div class="keu-col keu-est"><h4>~ We estimated</h4><ul id="keuEst"></ul></div>
+          <div class="keu-col keu-unk"><h4>? Not disclosed</h4><ul id="keuUnk"></ul></div>
+        </div>
+        <p class="keu-note">That's why we show a range rather than pretending the result is exact.</p>
+        <div class="insight" style="border-color:var(--amber);background:rgba(229,169,74,.07)" id="varInsight"></div></div></details>
+      </div>
+
+      
+
+      <div class="rcard full" id="methCard">
+        <h3>How was this calculated?</h3>
+        <details class="fold" id="foldMeth"><summary>Read the step-by-step method</summary><div class="fold-body">
+        <div id="methSteps"></div>
+        <details class="meth" id="methDetails">
+          <summary>View formulas, raw coefficients and sources</summary>
+          <p style="font-size:14px;color:var(--text-dim);margin-top:8px">
+            Direct water = IT energy × WUE (consumptive). Electricity water = IT energy × PUE × grid water intensity (consumptive).
+            Uncertain variables are sampled as distributions across <span id="mcN"></span> Monte Carlo scenarios, with infrastructure variables (PUE, WUE, grid intensity, model energy scale) sampled once per scenario and shared across all events, so uncertainty stays correlated instead of averaging away. Numbers in brackets cite the reference list.
+          </p>
+          <div class="table-scroll">
+            <table class="coef-table" id="coefTable"><thead><tr><th>Coefficient</th><th>Value / distribution</th><th>Accounting boundary</th><th>Grade</th><th>Ref</th></tr></thead><tbody></tbody></table>
+          </div>
+          <div class="est-json xp" id="estJson"></div>
+          <ul class="src-list" id="srcList"></ul>
+          <p style="font-family:var(--font-m);font-size:12px;color:var(--text-faint);margin-top:12px" id="manifest"></p>
+        </details>
+        </div></details>
+      </div>
+
+      <div class="rcard full xp" id="tunerCard">
+        <h3>🔬 Tune the physics</h3>
+        <p style="font-size:14px;color:var(--text-dim);margin-bottom:16px">Pin any parameter to a fixed value and the full 8,000-scenario simulation reruns live. Pinning removes that parameter's uncertainty, so the range narrows; Reset restores the evidence-based distributions.</p>
+        <div class="tuner-grid">
+          <div class="tuner-item"><label>Facility PUE <span id="tvPue" class="tv">distribution</span></label><input type="range" id="slPue" min="1.02" max="1.80" step="0.01" value="1.12"></div>
+          <div class="tuner-item"><label>Site WUE, L/kWh <span id="tvWue" class="tv">distribution</span></label><input type="range" id="slWue" min="0" max="2.5" step="0.01" value="0.5"></div>
+          <div class="tuner-item"><label>Grid water, L/kWh <span id="tvGrid" class="tv">distribution</span></label><input type="range" id="slGrid" min="0.1" max="4.5" step="0.05" value="1.2"></div>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <span style="font-family:var(--font-m);font-size:12.5px;color:var(--text-dim)">Water boundary:</span>
+          <button class="wi-opt sel" id="bndCons" onclick="setBoundary(false)">Consumptive (default)</button>
+          <button class="wi-opt" id="bndLife" onclick="setBoundary(true)">Lifecycle electricity water · UNU method [11]</button>
+        </div>
+        <div class="tuner-read" id="tunerRead"></div>
+        <button class="btn btn-small btn-ghost" style="margin-top:14px" onclick="resetTuner()">Reset to evidence-based distributions</button>
+      </div>
+
+      <div class="rcard full xp">
+        <h3>🔬 Probability density, all 8,000 scenarios</h3>
+        <canvas id="kde" height="240" style="width:100%;display:block"></canvas>
+        <div class="kde-leg" id="kdeLeg"></div>
+      </div>
+
+          </div>
+
+    <div class="result-actions">
+      <button class="btn btn-primary" onclick="startCalc()">Calculate another task</button>
+      <button class="btn btn-ghost" onclick="go('home')">Back to home</button>
+    </div>
+  </div>
+</main>
+
+<main id="view-about" class="hidden">
+  <div class="wrap about-wrap">
+    <div class="about-top">
+      <div>
+        <div class="eyebrow">About this tool</div>
+        <h1 class="sec-title">What Drip is, and what it stands on</h1>
+      </div>
+      <button class="btn btn-ghost btn-small" onclick="closeAbout()" aria-label="Close">✕ Close</button>
+    </div>
+
+    <section class="about-sec">
+      <h2>What this is</h2>
+      <p>Drip is an independent estimator of the water footprint behind everyday AI use. You describe a task in ordinary language, a chat session, some images, a video, an afternoon of AI-assisted coding, take a guess, and get back a confident floor, a typical range and a best estimate, shown in household terms like toilet flushes, shower minutes and kettle boils.</p>
+      <p>Every figure is a modelled estimate traceable to a numbered public source. None of it is a measurement of any company's actual systems, and nothing here is a claim about what any specific provider consumed. Where a provider has published its own measurements we say so and cite them; where it hasn't, we extrapolate from independent research, grade the evidence lower and widen the range accordingly.</p>
+    </section>
+
+    <section class="about-sec">
+      <h2>Two audiences, one tool</h2>
+      <p>Everyday mode speaks plainly ("usually between 8 mL and 24 mL, very unlikely to be under 6 mL") and includes a guess-before-reveal game, a water-literacy quiz, session badges and shareable receipts. Expert mode opens the machinery: percentiles, the estimator path taken, a density plot of all 8,000 simulated scenarios, live sliders for facility and grid parameters, a switchable water-accounting boundary, and the full coefficient table with evidence grades and citations.</p>
+    </section>
+
+    <section class="about-sec">
+      <h2>How the estimate is built</h2>
+      <p>The engine keeps two water pathways separate, because most public commentary conflates them: water consumed cooling the data centre on site, and water consumed upstream generating the electricity. Your description is decomposed into individual events, including versions you discarded, which are charged at full cost because the AI ran regardless.</p>
+      <p>Energy per event follows an evidence hierarchy: a provider's own production measurement where one exists, a provider claim where one is stated, and independent open-model benchmarks otherwise. The path taken is recorded with every estimate. There is deliberately no universal "water per prompt" number, because no such constant honestly exists.</p>
+      <p>Nothing uncertain is treated as a single value. Each estimate runs 8,000 Monte Carlo scenarios, with infrastructure unknowns sampled once per scenario and shared across events so uncertainty stays correlated instead of quietly averaging away. Video uses a segmented model reflecting how tools actually work in 2026: energy rises steeply within a native clip of roughly 5 to 12 seconds, then scales linearly as clips are stitched, with a deliberately wide 4K multiplier because commercial 4K is usually an upscale pass rather than native generation.</p>
+    </section>
+
+    <section class="about-sec">
+      <h2>The research this stands on</h2>
+      <p>Eleven cited sources, each mapped to specific coefficients in the model. The measurement backbone comes from Google's 2025 production study of Gemini (Elsworth, Huang and colleagues), Luccioni, Jernite and Strubell's inference benchmarks across 88 models at ACM FAccT 2024, the 2025 and 2026 video energy scaling papers from Jegham, Gamazaychikov, Delavande, Pierrard and Luccioni, and the AI Energy Score v2 open-model benchmarks.</p>
+      <p>The water framework follows Li, Yang, Islam and Ren's two-boundary approach, with grid water intensities from Macknick and colleagues at NREL. Infrastructure distributions draw on the Uptime Institute survey alongside Google's and Microsoft's environmental reports. Provider-side evidence includes Mistral AI's lifecycle assessment with Carbone 4 and ADEME, and OpenAI's stated per-query figure, which is labelled as a claim rather than a measurement because its methodology is unpublished.</p>
+      <p>The 2026 United Nations University report on the environmental cost of AI (Aczel, Chamanara, Matin, Farsi, Marwala and Madani, UNU-INWEH) supplies the lifecycle electricity-water boundary that expert mode can switch to, along with per-country intensities and the characterisation of commercial video as stitched short clips.</p>
+      <p>Full citations with links are on the <button class="linkish" onclick="closeAbout();setTimeout(()=>document.getElementById('refs').scrollIntoView(),60)">references section</button> of the home page.</p>
+    </section>
+
+    <section class="about-sec">
+      <h2>How we check ourselves</h2>
+      <p>A 28-check automated evaluation runs against the calculation engine: it confirms the model reproduces each cited source at that source's own accounting boundary, that scaling behaviour matches the published laws, that repeated runs agree to within a couple of percent, and that the stated floor is properly calibrated, exactly one in twenty simulated scenarios falls below it.</p>
+      <p>The methodology is versioned, and corrections are public rather than silent. Version 0.3 fixed a genuine error in the video duration model after an outside challenge; that change, and the reasoning behind it, is documented. Divergences from other figures circulating online, including the widely quoted 2023 estimate and the larger UN figures, are explained rather than hidden: most turn out to be different accounting boundaries rather than disagreements about the underlying energy.</p>
+    </section>
+
+    <section class="about-sec">
+      <h2>What building this cost</h2>
+      <p>Fair question to turn on ourselves. This tool was built through a multi-day AI-assisted coding session, so we ran that session through Drip's own engine: roughly <b style="color:var(--text)">≈33 litres</b> of water, almost certainly more than 2 litres, possibly up to ≈260. About 2.7 minutes of showering, or 6 to 7 toilet flushes. Around a third went to data-centre cooling and the rest to the water behind an estimated 14 kWh of electricity.</p>
+      <p>The honest details: it's a grade-D, wide-range estimate, exactly as the tool warns for coding sessions, and a good share of it was iteration, including one full rebuild, a corrected video model and several discarded drafts. Was it worth the water? We think so. But the point of this tool is that we got to decide that knowingly, and now so can you.</p>
+    </section>
+
+    <section class="about-sec">
+      <h2>Independence</h2>
+      <p>Drip is not affiliated with, endorsed by or sponsored by any AI provider. Product names identify the services people describe, and all trademarks remain with their owners. Prompt content is never collected. Corrections and challenges are welcome; they are how this got better.</p>
+    </section>
+
+    <div style="margin:34px 0 60px;display:flex;gap:12px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="closeAbout();startCalc()">Calculate my AI task</button>
+      <button class="btn btn-ghost" onclick="closeAbout()">Back</button>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div><b style="color:var(--text-dim)">Drip</b> · Estimated, not directly measured · Water Model v0.3 (prototype) · Model catalogue reviewed August 2026 · <button class="linkish" onclick="openAbout()">About this tool</button></div>
+    <div>Prompt content: not collected · All coefficients traceable to the numbered references above</div>
+    <div>Independent project. Not affiliated with or endorsed by any AI provider. All product names and trademarks are the property of their respective owners. Figures are modelled estimates from public sources, not measurements of any provider's systems.</div>
+  </div>
+</footer>
+
+<script>
+'use strict';
+/* =====================================================================
+   ENVIRONMENTAL EVIDENCE REGISTRY
+   Numbered references. Every coefficient cites one by [n].
+===================================================================== */
+const REFS = [
+  {n:1, title:'Elsworth, Huang et al., "Measuring the environmental impact of delivering AI at Google scale"', pub:'Google, technical paper (arXiv:2508.15734) and accompanying blog', date:'August 2025', url:'https://arxiv.org/abs/2508.15734', note:'Production measurement of the median Gemini Apps text prompt in May 2025: 0.24 Wh energy, 0.26 mL on-site water, 0.03 gCO2e. Water figure covers on-site consumption only and excludes upstream electricity-generation water.'},
+  {n:2, title:'Luccioni, Jernite & Strubell, "Power Hungry Processing: Watts Driving the Cost of AI Deployment?"', pub:'ACM FAccT 2024 (arXiv:2311.16863)', date:'2024', url:'https://arxiv.org/abs/2311.16863', note:'First systematic measurement of inference energy across 88 models and 10 tasks. Image generation mean ≈2.9 Wh per image, up to ≈11.5 Wh; text generation orders of magnitude lower.'},
+  {n:3, title:'Jegham, Gamazaychikov & Luccioni, "Lights, Camera, Carbon: Architectural Scaling Laws for Video Generation Energy Consumption"', pub:'Sustainable AI Group (arXiv:2607.04553), under peer review', date:'2026', url:'https://arxiv.org/abs/2607.04553', note:'A standard 5-second video on common open models measured at ≈57.5 to 114.8 Wh, with energy scaling near-quadratically in duration and resolution. MIT Technology Review measured CogVideoX at ≈944 Wh per 5-second clip (2025).'},
+  {n:4, title:'Delavande, Pierrard & Luccioni, "Video Killed the Energy Budget: Characterizing the Latency and Power Regimes of Open Text-to-Video Models"', pub:'arXiv:2509.19222', date:'2025', url:'https://arxiv.org/abs/2509.19222', note:'Compute-bound scaling model for video diffusion validating the duration and resolution scaling regimes used in our video estimator.'},
+  {n:5, title:'Luccioni & Gamazaychikov, "AI Energy Score v2"', pub:'Hugging Face', date:'2025', url:'https://huggingface.co/blog/sasha/ai-energy-score-v2', note:'Standardised open-model benchmarks: roughly 0.03 Wh (8B parameters) to ≈1.9 Wh (405B) per text response; reasoning modes average ≈30 times more energy than non-reasoning.'},
+  {n:6, title:'Li, Yang, Islam & Ren, "Making AI Less Thirsty: Uncovering and Addressing the Secret Water Footprint of AI Models"', pub:'UC Riverside / UT Arlington (arXiv:2304.03271)', date:'2023, revised 2025', url:'https://arxiv.org/abs/2304.03271', note:'Framework separating on-site (scope 1) cooling water from off-site (scope 2) electricity water. Our two-boundary model follows this structure.'},
+  {n:7, title:'Macknick, Newmark, Heath & Hallett, "Operational water consumption and withdrawal factors for electricity generating technologies"', pub:'NREL / Environmental Research Letters', date:'2012, with subsequent updates', url:'https://www.nrel.gov/docs/fy11osti/50900.pdf', note:'Consumptive versus withdrawal water intensity by generation technology. Grid-average consumptive intensity typically falls between ≈0.4 and 2.5 L/kWh depending on the mix.'},
+  {n:8, title:'Uptime Institute Global Data Center Survey; Google Environmental Report 2025; Microsoft Environmental Sustainability Report', pub:'Uptime Institute; Google; Microsoft', date:'2024 to 2025', url:'https://uptimeinstitute.com/resources', note:'Industry average PUE ≈1.56, hyperscale fleets ≈1.09 to 1.2. Published fleet-average WUE: Google ≈1.1 L/kWh, Microsoft ≈0.49 L/kWh, consumptive, per IT kWh. Individual sites vary widely.'},
+  {n:9, title:'Altman, "The Gentle Singularity" (per-query claim)', pub:'OpenAI (company blog)', date:'June 2025', url:'https://blog.samaltman.com/the-gentle-singularity', note:'Company-stated averages of ≈0.34 Wh and ≈0.32 mL per ChatGPT query. Methodology not published, so treated as claim-grade evidence with widened uncertainty.'},
+  {n:10, title:'Mistral AI, "Our contribution to a global environmental standard for AI" (lifecycle analysis of Mistral Large 2)', pub:'Mistral AI, with Carbone 4 and ADEME', date:'July 2025', url:'https://mistral.ai/news/our-contribution-to-a-global-environmental-standard-for-ai', note:'First provider lifecycle assessment of an LLM, reporting per-response water and carbon including upstream effects. Used as corroborating evidence for text-inference magnitudes.'},
+  {n:11, title:'Aczel, Chamanara, Matin, Farsi, Marwala & Madani, "Environmental Cost of AI\'s Energy Use: Carbon, Water and Land Footprints"', pub:'United Nations University Institute for Water, Environment and Health (UNU-INWEH), DOI 10.53328/INR26RMA002', date:'2026', url:'https://collections.unu.edu/eserv/UNU:10647/UNU-INWEH-Report-The_Env_Cost_of_AI-2026.pdf', note:'UN assessment of AI\'s carbon, water and land footprints. Uses the lifecycle water footprint of electricity (global average 9.9 L/kWh, country range 2 to 66), a wider boundary than our consumptive default: their 28.6 mL per typical image and 4.1 L per complex video clip use the same energy figures as ours with that wider water boundary. Also documents per-clip video energy up to ~415 Wh and near-quadratic scaling in resolution and frames, and that commercial minute-long videos are stitched from short native clips.'}
+];
+const REF = {}; REFS.forEach(r=>REF[r.n]=r);
+
+/* Distribution helpers */
+function rTri(min, mode, max){const u=Math.random(),F=(mode-min)/(max-min);return u<F?min+Math.sqrt(u*(max-min)*(mode-min)):max-Math.sqrt((1-u)*(max-min)*(max-mode));}
+function rLogN(p10,p50,p90){const mu=Math.log(p50),sigma=(Math.log(p90)-Math.log(p10))/(2*1.28155);let u=0,v=0;while(u===0)u=Math.random();while(v===0)v=Math.random();const z=Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);return Math.exp(mu+sigma*z);}
+
+/* Infrastructure coefficients */
+const INFRA = {
+  pue:{
+    hyperscale:{sample:()=>rTri(1.06,1.12,1.25),label:'PUE (hyperscale fleet)',disp:'tri(1.06, 1.12, 1.25)',boundary:'facility energy / IT energy',grade:'B',ref:8},
+    unknown:{sample:()=>rTri(1.08,1.3,1.7),label:'PUE (undisclosed facility)',disp:'tri(1.08, 1.30, 1.70)',boundary:'facility energy / IT energy',grade:'C',ref:8}
+  },
+  wue:{
+    google:{sample:()=>rTri(0.7,1.1,1.6),label:'WUE, Google fleet average',disp:'tri(0.7, 1.1, 1.6) L/kWh',boundary:'consumption, on-site, per IT kWh',grade:'B',ref:8},
+    msft:{sample:()=>rTri(0.3,0.49,0.9),label:'WUE, Microsoft fleet average',disp:'tri(0.30, 0.49, 0.90) L/kWh',boundary:'consumption, on-site, per IT kWh',grade:'B',ref:8},
+    unknown:{sample:()=>rTri(0.05,0.5,2.0),label:'WUE, undisclosed operator',disp:'tri(0.05, 0.5, 2.0) L/kWh',boundary:'consumption, on-site, per IT kWh',grade:'C',ref:8}
+  },
+  grid:{sample:()=>rLogN(0.4,1.2,2.6),label:'Grid water intensity (consumptive)',disp:'logN(P10 0.4, P50 1.2, P90 2.6) L/kWh',boundary:'consumption, upstream electricity',grade:'C',ref:7},
+  gridLife:{sample:()=>rLogN(4,9.9,25),label:'Grid water intensity (lifecycle, incl. hydropower reservoir evaporation)',disp:'logN(P10 4, P50 9.9, P90 25) L/kWh · UNU-INWEH global average 9.9, country range 2–66',boundary:'lifecycle water footprint of electricity',grade:'C',ref:11}
+};
+
+/* Providers · catalogue reviewed August 2026.
+   Sora (OpenAI) was discontinued on 26 April 2026 and is deliberately absent;
+   people who used it can pick "A tool that has since shut down".
+   Claude does not offer image generation, so it never appears in the image flow. */
+const PROVIDERS = {
+  gemini:{name:'Gemini (Google)',wue:'google',pue:'hyperscale',textPath:'measured'},
+  chatgpt:{name:'ChatGPT (OpenAI)',wue:'msft',pue:'hyperscale',textPath:'claim'},
+  claude:{name:'Claude (Anthropic)',wue:'unknown',pue:'hyperscale',textPath:'benchmark'},
+  copilot:{name:'Copilot (Microsoft)',wue:'msft',pue:'hyperscale',textPath:'benchmark'},
+  grok:{name:'Grok (xAI)',wue:'unknown',pue:'unknown',textPath:'benchmark'},
+  deepseek:{name:'DeepSeek',wue:'unknown',pue:'unknown',textPath:'benchmark'},
+  mistral:{name:'Le Chat (Mistral AI)',wue:'unknown',pue:'hyperscale',textPath:'benchmark'},
+  midjourney:{name:'Midjourney',wue:'unknown',pue:'unknown',textPath:'benchmark'},
+  gptimage:{name:'ChatGPT images (OpenAI)',wue:'msft',pue:'hyperscale',textPath:'claim'},
+  nanobanana:{name:'Gemini images / Nano Banana (Google)',wue:'google',pue:'hyperscale',textPath:'measured'},
+  flux:{name:'Flux (Black Forest Labs)',wue:'unknown',pue:'unknown',textPath:'benchmark'},
+  ideogram:{name:'Ideogram',wue:'unknown',pue:'unknown',textPath:'benchmark'},
+  firefly:{name:'Firefly (Adobe)',wue:'unknown',pue:'hyperscale',textPath:'benchmark'},
+  veo:{name:'Veo (Google)',wue:'google',pue:'hyperscale',textPath:'benchmark'},
+  kling:{name:'Kling (Kuaishou)',wue:'unknown',pue:'unknown',textPath:'benchmark'},
+  runway:{name:'Runway',wue:'unknown',pue:'unknown',textPath:'benchmark'},
+  hailuo:{name:'Hailuo (MiniMax)',wue:'unknown',pue:'unknown',textPath:'benchmark'},
+  seedance:{name:'Seedance (ByteDance)',wue:'unknown',pue:'unknown',textPath:'benchmark'},
+  wan:{name:'Wan (Alibaba)',wue:'unknown',pue:'unknown',textPath:'benchmark'},
+  luma:{name:'Luma Dream Machine',wue:'unknown',pue:'unknown',textPath:'benchmark'},
+  pika:{name:'Pika',wue:'unknown',pue:'unknown',textPath:'benchmark'},
+  cursor:{name:'Cursor',wue:'unknown',pue:'hyperscale',textPath:'benchmark'},
+  claudecode:{name:'Claude Code (Anthropic)',wue:'unknown',pue:'hyperscale',textPath:'benchmark'},
+  windsurf:{name:'Windsurf',wue:'unknown',pue:'hyperscale',textPath:'benchmark'},
+  retired:{name:'A tool that has since shut down',wue:'unknown',pue:'unknown',textPath:'benchmark'},
+  multiple:{name:'More than one tool',wue:'unknown',pue:'unknown',textPath:'benchmark'},
+  unsure:{name:"I'm not sure",wue:'unknown',pue:'unknown',textPath:'benchmark'}
+};
+
+/* Modality energy models */
+const ENERGY = {
+  text:{
+    measured:{label:'Energy per text response (production-measured median, Gemini)',disp:'logN(P10 0.15, P50 0.24, P90 0.55) Wh',grade:'A',ref:1,base:()=>rLogN(0.15,0.24,0.55)},
+    claim:{label:'Energy per text response (provider-claimed average)',disp:'logN(P10 0.15, P50 0.34, P90 1.5) Wh',grade:'C',ref:9,base:()=>rLogN(0.15,0.34,1.5)},
+    benchmark:{label:'Energy per text response (open-model benchmarks, frontier scale)',disp:'logN(P10 0.15, P50 0.8, P90 4) Wh',grade:'C',ref:5,base:()=>rLogN(0.15,0.8,4)},
+    reasoningMult:{label:'Reasoning-mode energy multiplier',disp:'tri(2, 8, 30) ×',grade:'C',ref:5,sample:()=>rTri(2,8,30)}
+  },
+  image:{
+    perAttempt:{label:'Energy per image generation attempt',disp:'logN(P10 0.5, P50 2.9, P90 11) Wh',grade:'B',ref:2,sample:()=>rLogN(0.5,2.9,11)},
+    upscale:{label:'Energy per upscale pass',disp:'tri(0.5, 1.5, 4) Wh',grade:'C',ref:2,sample:()=>rTri(0.5,1.5,4)}
+  },
+  video:{
+    base5s:{label:'Energy per 5 s video attempt (720p-class baseline)',disp:'logN(P10 35, P50 90, P90 550) Wh',grade:'C',ref:3,sample:()=>rLogN(35,90,550)},
+    durExp:{label:'Duration scaling exponent, within one native clip',disp:'tri(1.5, 1.9, 2.1)',grade:'C',ref:4,sample:()=>rTri(1.5,1.9,2.1)},
+    clipLen:{label:'Native clip length before stitching',disp:'tri(5, 8, 12) s · longer videos = stitched clips, scaling linearly across segments',grade:'C',ref:11,sample:()=>rTri(5,8,12)},
+    resFactor:{sd:0.55,hd:1.0,uhd:()=>rTri(1.15,2.2,6),label:'4K multiplier (usually an upscale pass; native 4K diffusion would be far higher)',disp:'tri(1.15, 2.2, 6) ×',grade:'C',ref:11}
+  },
+  coding:{
+    reqPerHr:{occasional:[6,15,30],regular:[20,40,70],heavy:[45,80,140],agent:[80,160,320]},
+    perReq:{label:'Energy per coding request (long-context text inference)',disp:'logN(P10 0.2, P50 1.0, P90 8) Wh',grade:'D',ref:5,sample:()=>rLogN(0.2,1.0,8)}
+  }
+};
+
+/* Provider evidence explorer, August 2026 */
+const EXPLORER = [
+  {name:'Gemini · Google', strength:'strong', know:[['yes','Production-measured energy and on-site water per median text prompt [1]'],['yes','Fleet PUE and WUE published [8]'],['no','Per-request data centre or cooling system'],['no','Per-prompt figures for image and video generation']]},
+  {name:'ChatGPT · OpenAI', strength:'partial', know:[['est','Company-claimed per-query energy and water; methodology unpublished [9]'],['est','Widely reported as served largely from Microsoft Azure, whose fleet WUE is published [8]'],['no','Model- or modality-level measurements'],['no','Per-request infrastructure details']]},
+  {name:'Claude · Anthropic', strength:'partial', know:[['est','Comparable open-model benchmarks used as proxy [5]'],['no','Per-prompt energy or water disclosure to date'],['no','Facility-level WUE'],['yes','Text and coding only; Claude does not offer image or video generation']]},
+  {name:'Mistral · Le Chat', strength:'partial', know:[['yes','Published a lifecycle assessment of Mistral Large 2 with ADEME [10]'],['est','Per-response figures include upstream effects, a wider boundary than ours'],['no','Facility-level WUE or PUE'],['no','Per-request infrastructure details']]},
+  {name:'Veo · Google video', strength:'partial', know:[['yes','Runs on infrastructure with published fleet PUE and WUE [8]'],['no','Per-generation energy disclosure'],['est','Energy extrapolated from open video-model scaling laws [3][4]'],['no','Serving hardware or step counts']]},
+  {name:'Kling · Hailuo · Seedance · Wan', strength:'weak', know:[['est','Energy extrapolated from open video-model measurements [3][4]'],['no','Environmental disclosures found for these services to date'],['no','Facility locations, PUE or WUE'],['est','Regional grid water intensity differs; treated as an undisclosed grid']]},
+  {name:'Midjourney · Flux · Ideogram', strength:'weak', know:[['est','Energy from independent image-generation benchmarks [2]'],['no','Environmental disclosures found to date'],['no','Facility-level infrastructure data'],['yes','Benchmark image energies span a 30-fold range, which our distribution reflects']]},
+  {name:'Discontinued tools (e.g. Sora, closed April 2026)', strength:'weak', know:[['yes','Sora web and app were discontinued on 26 April 2026; its API closes 24 September 2026'],['est','Historical usage can still be estimated from the same open benchmarks'],['no','Retrospective disclosures from the operator'],['yes','Estimates for retired tools carry the widest ranges']]}
+];
+
+/* =====================================================================
+   ESTIMATION ENGINE
+===================================================================== */
+const MC_N = 8000;
+const METHODOLOGY = 'Water Model v0.3 · energy-model 0.2 · direct-water 0.1 · electricity-water 0.1 · uncertainty 0.1 · evidence 2026-08 · catalogue 2026-08';
+
+function pct(sorted,p){const i=(sorted.length-1)*p;const lo=Math.floor(i),hi=Math.ceil(i);return sorted[lo]+(sorted[hi]-sorted[lo])*(i-lo);}
+
+function buildEvents(s){
+  const ev=[];
+  if(s.task==='chat'){
+    const n=s.exactResponses||{quick:2,short:10,long:30,research:80}[s.convLen]||10;
+    const rf={none:0,some:0.3,lots:0.8,unsure:0.3}[s.reasoning]??0.3;
+    ev.push({modality:'text',count:n,reasoningFrac:rf,label:'Text responses',accepted:true});
+  }
+  if(s.task==='image'){
+    const kept=s.exactImages||{one:1,few:4,several:8,many:15}[s.imgCount]||4;
+    const extra={none:0,few:Math.max(2,Math.round(kept*0.5)),lots:kept*2,unsure:Math.round(kept*0.8)}[s.versions]??0;
+    ev.push({modality:'image',count:kept,label:'Image generations',accepted:true});
+    if(extra>0)ev.push({modality:'image',count:extra,label:'Discarded versions',accepted:false});
+    if(s.upscale==='yes')ev.push({modality:'imageUpscale',count:1,label:'Upscaling',accepted:true});
+    ev.push({modality:'text',count:Math.round((kept+extra)*1.2),reasoningFrac:0,label:'Prompts',accepted:true,minor:true});
+  }
+  if(s.task==='video'){
+    const kept=s.exactVideos||{one:1,few:3,several:8,many:14}[s.vidCount]||1;
+    const dur={s5:5,s10:10,s30:30,m1:60}[s.vidDur]||10;
+    const res={std:'sd',hd:'hd',uhd:'uhd',unsure:'hd'}[s.vidRes]||'hd';
+    const retries={none:0,few:2,several:4,lots:8,unsure:3}[s.retries]??0;
+    ev.push({modality:'video',count:kept,dur,res,label:'Video attempts (kept)',accepted:true});
+    if(retries>0)ev.push({modality:'video',count:retries,dur,res,label:'Discarded generations',accepted:false});
+    ev.push({modality:'text',count:(kept+retries)*2,reasoningFrac:0,label:'Text prompts',accepted:true,minor:true});
+  }
+  if(s.task==='coding'){
+    const hrs={h05:0.5,h1:1.5,h4:4,h8:8,days:20}[s.codeDur]||2;
+    const intensity=s.codeIntensity||'regular';
+    const rf=intensity==='agent'?0.6:(s.codeUses||[]).includes('agent')?0.5:0.25;
+    ev.push({modality:'coding',hours:hrs,intensity,reasoningFrac:rf,label:'AI coding assistance',accepted:true});
+    if((s.codeUses||[]).includes('assets'))ev.push({modality:'image',count:6,label:'Generated assets',accepted:true});
+  }
+  return ev;
+}
+
+function estimate(state,ov){
+  ov=ov||{};
+  const events=buildEvents(state);
+  const prov=PROVIDERS[state.provider]||PROVIDERS.unsure;
+  const wueDef=INFRA.wue[prov.wue],pueDef=INFRA.pue[prov.pue];
+  const textDef=ENERGY.text[prov.textPath]||ENERGY.text.benchmark;
+
+  const totals=[],directs=[],elecs=[],energies=[];
+  const perEvent=events.map(()=>[]);
+  const samp={wue:[],pue:[],grid:[],escale:[]};
+
+  for(let i=0;i<MC_N;i++){
+    const wue=ov.wue!=null?ov.wue:wueDef.sample();
+    const pue=ov.pue!=null?ov.pue:pueDef.sample();
+    const gridDef=ov.lifecycle?INFRA.gridLife:INFRA.grid;
+    const grid=ov.grid!=null?ov.grid:gridDef.sample();
+    const textE=textDef.base();
+    const reasonM=ENERGY.text.reasoningMult.sample();
+    const imgE=ENERGY.image.perAttempt.sample();
+    const vidBase=ENERGY.video.base5s.sample();
+    const vidExp=ENERGY.video.durExp.sample();
+    const clipLen=ENERGY.video.clipLen.sample();
+    const uhdF=ENERGY.video.resFactor.uhd();
+    const codeE=ENERGY.coding.perReq.sample();
+
+    let E=0;
+    events.forEach((e,ix)=>{
+      let eE=0;
+      if(e.modality==='text'){const per=textE*(1-e.reasoningFrac)+textE*reasonM*e.reasoningFrac;eE=e.count*per;}
+      else if(e.modality==='image'){eE=e.count*imgE;}
+      else if(e.modality==='imageUpscale'){eE=ENERGY.image.upscale.sample();}
+      else if(e.modality==='video'){
+        const rf=e.res==='uhd'?uhdF:ENERGY.video.resFactor[e.res];
+        /* longer videos are stitched from native clips: near-quadratic within
+           a clip [3][4], linear across segments [11] */
+        const nClips=Math.max(1,Math.ceil(e.dur/clipLen));
+        const within=e.dur/nClips;
+        eE=e.count*nClips*vidBase*Math.pow(within/5,vidExp)*rf;
+      }
+      else if(e.modality==='coding'){const [lo,mo,hi]=ENERGY.coding.reqPerHr[e.intensity];const reqs=rTri(lo,mo,hi)*e.hours;const per=codeE*(1-e.reasoningFrac)+codeE*reasonM*0.5*e.reasoningFrac;eE=reqs*per;}
+      perEvent[ix].push(eE);E+=eE;
+    });
+
+    const kwh=E/1000;
+    const wDirect=kwh*wue, wElec=kwh*pue*grid;
+    totals.push(wDirect+wElec);directs.push(wDirect);elecs.push(wElec);energies.push(kwh);
+    samp.wue.push(wue);samp.pue.push(pue);samp.grid.push(grid);samp.escale.push(E);
+  }
+
+  const sT=[...totals].sort((a,b)=>a-b),sD=[...directs].sort((a,b)=>a-b),sE=[...elecs].sort((a,b)=>a-b),sK=[...energies].sort((a,b)=>a-b);
+  const q=s=>({p05:pct(s,.05),p10:pct(s,.1),p50:pct(s,.5),p90:pct(s,.9)});
+  const eventMed=perEvent.map(arr=>{const kwh=pct([...arr].sort((a,b)=>a-b),.5)/1000;return kwh*(pct([...samp.wue].sort((a,b)=>a-b),.5)+pct([...samp.pue].sort((a,b)=>a-b),.5)*pct([...samp.grid].sort((a,b)=>a-b),.5));});
+  const attr=attribution(samp,totals);
+  const ratio=q(sT).p90/Math.max(q(sT).p10,1e-9);
+  const confidence=ratio<4?'high':ratio<12?'medium':'low';
+
+  const grades=[wueDef.grade,INFRA.grid.grade];
+  events.forEach(e=>{
+    if(e.minor)return;
+    if(e.modality==='text')grades.push(textDef.grade);
+    if(e.modality==='image'||e.modality==='imageUpscale')grades.push(ENERGY.image.perAttempt.grade);
+    if(e.modality==='video')grades.push(ENERGY.video.base5s.grade);
+    if(e.modality==='coding')grades.push(ENERGY.coding.perReq.grade);
+  });
+  const grade=grades.sort()[grades.length-1];
+
+  const estimatorId = state.task==='chat' ? (prov.textPath==='measured'?'text.production_measured.v2':prov.textPath==='claim'?'text.provider_claim.v2':'text.open_benchmark.v2')
+    : state.task==='image' ? 'image.benchmark.luccioni2024.v2'
+    : state.task==='video' ? 'video.segmented_scaling.v3'
+    : 'coding.session_decomposition.v2';
+
+  return {events,eventMed,total:q(sT),direct:q(sD),elec:q(sE),energy:q(sK),confidence,grade,attr,prov,wueDef,pueDef,textDef,estimatorId,samples:sT,
+          coefs:usedCoefs(events,prov,wueDef,pueDef,textDef,ov.lifecycle?INFRA.gridLife:INFRA.grid)};
+}
+
+function attribution(samp,totals){
+  const lt=totals.map(v=>Math.log(Math.max(v,1e-12)));
+  function corr(xs){
+    const lx=xs.map(v=>Math.log(Math.max(v,1e-12)));
+    const n=lx.length,mx=lx.reduce((a,b)=>a+b)/n,my=lt.reduce((a,b)=>a+b)/n;
+    let sxy=0,sxx=0,syy=0;
+    for(let i=0;i<n;i++){const dx=lx[i]-mx,dy=lt[i]-my;sxy+=dx*dy;sxx+=dx*dx;syy+=dy*dy;}
+    return sxx&&syy?(sxy/Math.sqrt(sxx*syy))**2:0;
+  }
+  const raw={
+    'Model compute energy':corr(samp.escale),
+    'Cooling system (WUE)':corr(samp.wue),
+    'Electricity grid mix':corr(samp.grid),
+    'Facility overhead (PUE)':corr(samp.pue)
+  };
+  const sum=Object.values(raw).reduce((a,b)=>a+b,0)||1;
+  const norm=Object.entries(raw).map(([k,v])=>[k,v/sum]).filter(([,v])=>v>=0.03).sort((a,b)=>b[1]-a[1]);
+  const kept=norm.reduce((a,[,v])=>a+v,0)||1;
+  return norm.map(([k,v])=>[k,v/kept]);
+}
+
+function usedCoefs(events,prov,wueDef,pueDef,textDef,gridDef){
+  const list=[wueDef,pueDef,gridDef||INFRA.grid];
+  const mods=new Set(events.filter(e=>!e.minor).map(e=>e.modality));
+  if(mods.has('text')||events.some(e=>e.modality==='text')){list.push(textDef);list.push(ENERGY.text.reasoningMult);}
+  if(mods.has('image')||mods.has('imageUpscale'))list.push(ENERGY.image.perAttempt);
+  if(events.some(e=>e.modality==='imageUpscale'))list.push(ENERGY.image.upscale);
+  if(mods.has('video')){list.push(ENERGY.video.base5s,ENERGY.video.durExp,ENERGY.video.clipLen);}
+  if(events.some(e=>e.modality==='video'&&e.res==='uhd'))list.push(ENERGY.video.resFactor);
+  if(mods.has('coding'))list.push(ENERGY.coding.perReq);
+  return list;
+}
+
+/* Formatting */
+function fmtVol(l){
+  if(l<0.001)return '<1 mL';
+  if(l<0.9995){const ml=l*1000;return (ml<10?ml.toFixed(1):Math.round(ml))+' mL';}
+  if(l<10)return l.toFixed(1)+' L';
+  return Math.round(l)+' L';
+}
+function fmtRange(a,b){return fmtVol(a)+' – '+fmtVol(b);}
+
+/* Household water equivalents. These are HOUSEHOLD WATER VOLUMES for scale,
+   never lifecycle footprints (no "140 L per coffee" boundary mixing).
+   Shower: standard heads run ≈10–15 L/min (low-flow ≈6); we use 12. */
+const EQUIV=[
+  {v:0.00005,one:'water drop',many:'water drops',ico:'💧',note:'≈0.05 mL each'},
+  {v:0.005,one:'teaspoon',many:'teaspoons',ico:'🥄',note:'5 mL each'},
+  {v:0.03,one:'espresso shot',many:'espresso shots',ico:'☕',note:'≈30 mL of water each'},
+  {v:0.25,one:'drinking glass',many:'drinking glasses',ico:'🥛',note:'250 mL each'},
+  {v:1.5,one:'kettle boil',many:'kettle boils',ico:'🫖',note:'≈1.5 L, full kettle'},
+  {v:5,one:'toilet flush',many:'toilet flushes',ico:'🚽',note:'≈5 L, modern cistern'},
+  {v:12,one:'minute of showering',many:'minutes of showering',ico:'🚿',note:'≈12 L/min, standard head (10–15; low-flow ≈6)'},
+  {v:12,one:'dishwasher cycle',many:'dishwasher cycles',ico:'🍽️',note:'≈12 L, modern machine'},
+  {v:50,one:'washing machine load',many:'washing machine loads',ico:'🧺',note:'≈50 L per cycle'},
+  {v:80,one:'bathtub',many:'bathtubs',ico:'🛁',note:'≈80 L filled'}
+];
+function equivPhrase(ratio,e){
+  if(ratio<0.35)return `a fraction of a ${e.one}`;
+  if(ratio<0.75)return `about half a ${e.one}`;
+  if(ratio<1.5)return `about 1 ${e.one}`;
+  const n=ratio<10?Math.round(ratio*10)/10:Math.round(ratio);
+  return `≈ ${n} ${e.many}`;
+}
+function equivItems(L,take=3){
+  let cands=EQUIV.map(e=>({e,ratio:L/e.v})).filter(c=>c.ratio>=0.4&&c.ratio<=500);
+  if(cands.length<2)cands=EQUIV.map(e=>({e,ratio:L/e.v})).filter(c=>c.ratio>=0.2&&c.ratio<=500);
+  if(!cands.length)cands=[{e:EQUIV[0],ratio:L/EQUIV[0].v}];
+  cands.sort((a,b)=>Math.abs(Math.log10(a.ratio/2.5))-Math.abs(Math.log10(b.ratio/2.5)));
+  return cands.slice(0,take).sort((a,b)=>b.e.v-a.e.v)
+    .map(c=>({ico:c.e.ico,phrase:equivPhrase(c.ratio,c.e),note:c.e.note,ratio:c.ratio,unit:c.e.one}));
+}
+
+const RM_ANIM=(typeof matchMedia!=='undefined')&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+let VSEQ=0;
+/* Animated water surface: an eight-point wave (4 full periods across the
+   width = 8 alternating crests/troughs), drawn one period wider than the
+   vessel and translated by exactly one period for a seamless loop. */
+function waveSurface(x0,w,yTop,yBot,amp,sw,dur,fillRef,animate){
+  const per=w/4, half=per/2, start=x0-per, end=x0+w+per;
+  let d=`M ${start.toFixed(2)} ${yTop.toFixed(2)}`;
+  let up=true;
+  for(let x=start;x<end-0.01;x+=half){
+    d+=` q ${(half/2).toFixed(2)} ${(up?-amp:amp).toFixed(2)} ${half.toFixed(2)} 0`;
+    up=!up;
+  }
+  const anim=(RM_ANIM||animate===false)?'':`<animateTransform attributeName="transform" type="translate" values="0 0;${(-per).toFixed(2)} 0" dur="${dur}s" repeatCount="indefinite"/>`;
+  return `<g><path d="${d} L ${end.toFixed(2)} ${yBot.toFixed(2)} L ${start.toFixed(2)} ${yBot.toFixed(2)} Z" style="fill:${fillRef}">${anim}</path></g>
+  <g><path d="${d}" fill="none" stroke="rgba(225,250,255,.8)" stroke-width="${sw}">${anim}</path></g>`;
+}
+/* Hero-matched water gradient, defined locally per SVG so it resolves on
+   every view (gradients referenced across display:none subtrees do not). */
+function waterDefs(id){
+  return `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#54ddf5" stop-opacity=".95"/>
+    <stop offset="100%" stop-color="#1476b8" stop-opacity=".95"/>
+  </linearGradient>`;
+}
+
+/* =====================================================================
+   ADAPTIVE VESSEL (unchanged science, gentle rise animation)
+===================================================================== */
+function vesselSVG(litres,size=170,animate){
+  const bands=[
+    {max:0.01,cap:0.01,name:'10 mL test tube',shape:'tube'},
+    {max:0.1,cap:0.1,name:'100 mL measuring tube',shape:'tube'},
+    {max:0.5,cap:0.5,name:'500 mL glass',shape:'glass'},
+    {max:2,cap:2,name:'2 L bottle',shape:'bottle'},
+    {max:10,cap:10,name:'10 L jug',shape:'jug'},
+    {max:1e9,cap:10,name:'10 L buckets',shape:'bucket'}
+  ];
+  const b=bands.find(x=>litres<=x.max);
+  let count=1;
+  if(b.shape==='bucket')count=Math.max(1,Math.ceil(litres/10));
+  const fillOne=b.shape==='bucket'?Math.min(1,litres/(10*count)):Math.min(1,litres/b.cap);
+
+  function shapePath(shape,w,h){
+    if(shape==='tube')return{glass:`M${w*0.32} 6 h${w*0.36} v${h*0.72} a${w*0.18} ${w*0.18} 0 0 1 -${w*0.36} 0 Z`,top:6,bot:h*0.78+w*0.10};
+    if(shape==='glass')return{glass:`M${w*0.22} 8 L${w*0.3} ${h*0.9} a${w*0.06} ${w*0.06} 0 0 0 ${w*0.06} ${w*0.05} h${w*0.28} a${w*0.06} ${w*0.06} 0 0 0 ${w*0.06} -${w*0.05} L${w*0.78} 8 Z`,top:8,bot:h*0.93};
+    if(shape==='bottle'){const c=w/2,P=(fx,fy)=>`${(c+fx*w).toFixed(1)} ${(fy*h).toFixed(1)}`;
+      return{glass:`M ${P(-0.10,0.075)} L ${P(0.10,0.075)} L ${P(0.115,0.115)}
+        C ${P(0.31,0.15)} ${P(0.44,0.21)} ${P(0.44,0.30)}
+        C ${P(0.465,0.375)} ${P(0.40,0.435)} ${P(0.425,0.52)}
+        C ${P(0.45,0.60)} ${P(0.40,0.655)} ${P(0.425,0.74)}
+        L ${P(0.425,0.865)} Q ${P(0.425,0.94)} ${P(0.29,0.94)}
+        L ${P(-0.29,0.94)} Q ${P(-0.425,0.94)} ${P(-0.425,0.865)}
+        L ${P(-0.425,0.74)} C ${P(-0.40,0.655)} ${P(-0.45,0.60)} ${P(-0.425,0.52)}
+        C ${P(-0.40,0.435)} ${P(-0.465,0.375)} ${P(-0.44,0.30)}
+        C ${P(-0.44,0.21)} ${P(-0.31,0.15)} ${P(-0.115,0.115)} Z`,top:h*0.075,bot:h*0.94};}
+    if(shape==='jug')return{glass:`M${w*0.3} 8 h${w*0.34} l${w*0.1} ${h*0.16} v${h*0.62} a${w*0.08} ${w*0.08} 0 0 1 -${w*0.08} ${w*0.08} h-${w*0.42} a${w*0.08} ${w*0.08} 0 0 1 -${w*0.08} -${w*0.08} v-${h*0.62} Z`,top:8,bot:h*0.92};
+    return{glass:`M${w*0.16} 10 L${w*0.24} ${h*0.86} a${w*0.07} ${w*0.07} 0 0 0 ${w*0.07} ${w*0.06} h${w*0.32} a${w*0.07} ${w*0.07} 0 0 0 ${w*0.07} -${w*0.06} L${w*0.84} 10 Z`,top:10,bot:h*0.9};
+  }
+
+  const showCount=Math.min(count,4);
+  const anim=(animate===undefined)?(size>=150):!!animate; /* small comparison vessels stay static */
+  const h=size*1.15;
+  /* per-shape aspect ratio (width as a fraction of height), so a bottle is
+     bottle-shaped and a tube is slim, regardless of canvas size */
+  const AR={tube:0.5,glass:0.78,bottle:0.42,jug:0.95,bucket:1}[b.shape]||1;
+  const w=Math.min(size/Math.max(1,showCount*0.9),h*AR);
+  const uid='v'+(VSEQ++);
+  function bottleDecor(w,h,cid){
+    const c=w/2;
+    const above=`
+      <defs><linearGradient id="${cid}cap" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#7db6ff"/><stop offset=".45" stop-color="#2e6fd6"/><stop offset="1" stop-color="#1b4fa8"/>
+      </linearGradient></defs>
+      <rect x="${(c-w*0.135).toFixed(1)}" y="${(h*0.012).toFixed(1)}" width="${(w*0.27).toFixed(1)}" height="${(h*0.055).toFixed(1)}" rx="${(w*0.035).toFixed(1)}" fill="url(#${cid}cap)" stroke="rgba(200,225,255,.5)" stroke-width="1"/>
+      <line x1="${(c-w*0.09).toFixed(1)}" y1="${(h*0.02).toFixed(1)}" x2="${(c-w*0.09).toFixed(1)}" y2="${(h*0.058).toFixed(1)}" stroke="rgba(255,255,255,.35)" stroke-width="1"/>
+      <line x1="${(c+w*0.06).toFixed(1)}" y1="${(h*0.02).toFixed(1)}" x2="${(c+w*0.06).toFixed(1)}" y2="${(h*0.058).toFixed(1)}" stroke="rgba(10,30,60,.4)" stroke-width="1"/>
+      <line x1="${(c-w*0.115).toFixed(1)}" y1="${(h*0.112).toFixed(1)}" x2="${(c+w*0.115).toFixed(1)}" y2="${(h*0.112).toFixed(1)}" stroke="rgba(210,240,255,.45)" stroke-width="${Math.max(1,w*0.02).toFixed(1)}"/>`;
+    const ring=(fy)=>`<path d="M ${(c-w*0.40).toFixed(1)} ${(fy*h).toFixed(1)} q ${(w*0.40).toFixed(1)} ${(h*0.028).toFixed(1)} ${(w*0.80).toFixed(1)} 0" fill="none" stroke="rgba(235,250,255,.16)" stroke-width="${Math.max(1.2,w*0.03).toFixed(1)}"/>`;
+    const inside=ring(0.375)+ring(0.525)+ring(0.665)+
+      `<ellipse cx="${c.toFixed(1)}" cy="${(h*0.905).toFixed(1)}" rx="${(w*0.30).toFixed(1)}" ry="${(h*0.028).toFixed(1)}" fill="rgba(3,16,34,.35)"/>`;
+    return {above,inside};
+  }
+  let inner='';
+  for(let i=0;i<showCount;i++){
+    const s=shapePath(b.shape,w,h);
+    const deco=b.shape==='bottle'?bottleDecor(w,h,`${uid}c${i}`):null;
+    const waterTop=s.bot-(s.bot-s.top)*fillOne;
+    const amp=Math.min(2.6,Math.max(1.0,w*0.032))*(fillOne<0.06?0.4:1);
+    const cid=`${uid}c${i}`;
+    inner+=`<g transform="translate(${i*w*0.95},0)">
+      <defs>
+        <linearGradient id="${cid}rim" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="rgba(215,242,255,.9)"/>
+          <stop offset=".5" stop-color="rgba(150,200,235,.32)"/>
+          <stop offset="1" stop-color="rgba(125,185,225,.6)"/>
+        </linearGradient>
+        <linearGradient id="${cid}inn" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="rgba(175,225,248,.12)"/>
+          <stop offset="1" stop-color="rgba(175,225,248,.02)"/>
+        </linearGradient>
+        <clipPath id="${cid}"><path d="${s.glass}"/></clipPath>
+        ${waterDefs(cid+'w')}
+      </defs>
+      <path d="${s.glass}" fill="url(#${cid}inn)" stroke="url(#${cid}rim)" stroke-width="2"/>
+      <g clip-path="url(#${cid})">
+        <g class="vessel-water-wrap">${waveSurface(0,w,waterTop,s.bot+4,amp,1.3,3+i*0.4,`url(#${cid}w)`,anim)}</g>
+        <path d="M ${(w*0.24).toFixed(1)} ${(s.top+(s.bot-s.top)*0.1).toFixed(1)} q ${(-w*0.05).toFixed(1)} ${((s.bot-s.top)*0.28).toFixed(1)} 0 ${((s.bot-s.top)*0.56).toFixed(1)}" stroke="rgba(255,255,255,.22)" stroke-width="${Math.max(1.4,w*0.05).toFixed(1)}" stroke-linecap="round" fill="none"/>
+        <ellipse cx="${(w*0.62).toFixed(1)}" cy="${(s.top+(s.bot-s.top)*0.1).toFixed(1)}" rx="${(w*0.09).toFixed(1)}" ry="${(w*0.035).toFixed(1)}" fill="rgba(255,255,255,.3)"/>
+        ${deco?deco.inside:''}
+      </g>
+      ${deco?deco.above:''}
+    </g>`;
+  }
+  const extra=count>showCount?`<text x="${showCount*w*0.95+4}" y="${h*0.55}" class="vessel-tick-label" font-size="13">×${count}</text>`:'';
+  const pctFill=Math.round(fillOne*100);
+  const label=count>1?`${count} × ${b.name}`:`${b.name}, ≈${pctFill}% full`;
+  return {svg:`<svg class="vessel-svg" width="${Math.min(size*1.6,showCount*w*0.95+30)}" height="${h}" viewBox="0 0 ${showCount*w*0.95+30} ${h}" role="img" aria-label="Illustration: ${fmtVol(litres)} shown in ${label}">${inner}${extra}</svg>`,label};
+}
+
+/* =====================================================================
+   MODE, BADGES, TOAST, AMBIENCE
+===================================================================== */
+let MODE='everyday';
+function setMode(m){
+  MODE=m;
+  document.body.classList.toggle('expert',m==='expert');
+  document.getElementById('modeEveryday').classList.toggle('on',m==='everyday');
+  document.getElementById('modeExpert').classList.toggle('on',m==='expert');
+  if(m==='expert'){
+    award('diver');
+    if(lastResult&&!document.getElementById('view-result').classList.contains('hidden'))setTimeout(()=>renderDensity(lastResult),40);
+  }
+}
+
+const BADGES={
+  sense:{ico:'🧠',name:'Water Sense',desc:'aced the quiz'},
+  whisper:{ico:'💧',name:'Water Whisperer',desc:'guessed your footprint right'},
+  inspector:{ico:'🔬',name:'Evidence Inspector',desc:'opened the methodology'},
+  optimiser:{ico:'🧪',name:'Optimiser',desc:'explored a What If'},
+  diver:{ico:'🌊',name:'Deep Diver',desc:'switched to Expert mode'},
+  waves:{ico:'💦',name:'Made Waves',desc:'woke the lake'}
+};
+const earned=new Set();
+function award(k){
+  if(earned.has(k))return;
+  earned.add(k);
+  const b=BADGES[k];
+  document.getElementById('badgeTray').innerHTML=[...earned].map(x=>`<span title="${BADGES[x].name}: ${BADGES[x].desc}">${BADGES[x].ico}</span>`).join('');
+  toast(`${b.ico} Badge unlocked: <b>${b.name}</b>, ${b.desc}`);
+}
+let toastTimer=null;
+function toast(html){
+  const t=document.getElementById('toast');
+  t.innerHTML=html;t.classList.add('show');
+  clearTimeout(toastTimer);
+  /* duration scales with reading load: ~60ms per character,
+     never under 4.5s, never over 8s (Material snackbar guidance) */
+  const dur=Math.min(8000,Math.max(4500,1200+t.textContent.length*60));
+  toastTimer=setTimeout(()=>t.classList.remove('show'),dur);
+}
+(function(){
+  const t=document.getElementById('toast');
+  t.addEventListener('mouseenter',()=>clearTimeout(toastTimer));
+  t.addEventListener('mouseleave',()=>{clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2000);});
+  t.addEventListener('click',()=>{clearTimeout(toastTimer);t.classList.remove('show');});
+})();
+
+/* =====================================================================
+   RAIN ON GLASS
+   A canvas simulation of condensation droplets on the screen surface.
+   Each drop is drawn with a cast shadow, a lensing body (darker rim,
+   lighter core), a bottom caustic glow and a specular highlight, so it
+   reads as a 3D bead of water sitting on the glass. Static droplets
+   slowly condense and grow; heavy ones break loose, slide down with
+   wobble, shed a trail of micro-droplets, absorb the ones they hit,
+   stall when they get too small, and re-stick to the glass.
+===================================================================== */
+const RAIN={enabled:!matchMedia('(prefers-reduced-motion: reduce)').matches,
+  canvas:null,ctx:null,W:0,H:0,dpr:1,statics:[],runners:[],rings:[],last:0,raf:null};
+
+function rainResize(){
+  /* Mobile browsers fire resize when the URL bar slides away mid-scroll.
+     Reallocating the canvas then is what blanks the page, so ignore
+     height-only jitter and only ever do the real work when the width
+     (or a large height change) genuinely differs. */
+  const wNew=innerWidth,hNew=innerHeight;
+  if(RAIN.W===wNew&&Math.abs(RAIN.H-hNew)<160)return;
+  const c=RAIN.canvas;RAIN.dpr=Math.min(devicePixelRatio||1,innerWidth<=880?1:1.5);
+  RAIN.W=wNew;RAIN.H=hNew;
+  c.width=RAIN.W*RAIN.dpr;c.height=RAIN.H*RAIN.dpr;
+  RAIN.ctx.setTransform(RAIN.dpr,0,0,RAIN.dpr,0,0);
+  SPRITES.clear();
+  lakeInit();
+}
+let resizeT=null;
+function rainResizeDebounced(){clearTimeout(resizeT);resizeT=setTimeout(rainResize,250);}
+function newStatic(x,y,r){
+  return {x:x??Math.random()*RAIN.W, y:y??Math.random()*RAIN.H,
+    r:r??(1.8+Math.random()*5.6), seed:Math.random()*7, decay:false};
+}
+function initRain(){
+  RAIN.canvas=document.getElementById('rain');
+  RAIN.ctx=RAIN.canvas.getContext('2d',{alpha:true,desynchronized:true});
+  /* Ambient rain is desktop-first. On phones and tablets a full-viewport
+     canvas competes with the browser's raster thread while scrolling, which
+     can blank tiles as new content comes into view. Off by default there;
+     the header toggle turns it on for anyone who wants it. */
+  const smallOrTouch=innerWidth<=880||(matchMedia('(hover:none)').matches);
+  if(smallOrTouch)RAIN.enabled=false;
+  rainResize();addEventListener('resize',rainResizeDebounced,{passive:true});
+  const tgl=document.getElementById('rainToggleTxt');
+  if(tgl)tgl.textContent=RAIN.enabled?'Turn off droplets':'Turn on droplets';
+  const tb=document.getElementById('rainToggle');
+  if(tb)tb.setAttribute('aria-pressed',RAIN.enabled);
+  const n=Math.round(Math.min(22,RAIN.W*RAIN.H/78000));
+  for(let i=0;i<n;i++)RAIN.statics.push(newStatic());
+  /* first impression: motion within the first second, not after a minute
+     of condensation. A few drops start heavy, two are already running. */
+  for(let i=0;i<4;i++)RAIN.statics.push(newStatic(undefined,undefined,6.6+Math.random()*2.4));
+  kickstartRunners();
+  addEventListener('pointerdown',e=>{
+    if(!RAIN.enabled)return;
+    lakeClick(e.clientX,e.clientY);
+    if(e.target.closest('button,a,input,summary,select,textarea'))return;
+    if(!LAKE.awake)RAIN.rings.push({x:e.clientX,y:e.clientY,r:3,a:.5});
+    for(let i=0;i<3;i++)RAIN.statics.push(newStatic(e.clientX+(Math.random()*44-22),e.clientY+(Math.random()*44-22),3+Math.random()*5));
+  },{passive:true});
+  document.addEventListener('visibilitychange',()=>{RAIN.last=0;});
+  if(RAIN.enabled)RAIN.raf=requestAnimationFrame(rainFrame);
+}
+/* =====================================================================
+   HIDDEN LAKE (easter egg)
+   Click rapidly and the screen becomes a lake: a real 2D wave-equation
+   height field on a coarse grid (two-buffer method). Clicks inject
+   disturbances; waves propagate, interfere and decay. Rendered by
+   lighting the height gradient from the top-left: crests catch a cyan
+   highlight, troughs fall into shadow, still water is invisible.
+   Sleeps to zero cost when calm.
+===================================================================== */
+const LAKE={awake:false,cell:7,gw:0,gh:0,cur:null,prev:null,img:null,cvs:null,ictx:null,clicks:[],lastInput:0,energy:0};
+function lakeInit(){
+  LAKE.gw=Math.max(40,Math.ceil(RAIN.W/LAKE.cell));
+  LAKE.gh=Math.max(30,Math.ceil(RAIN.H/LAKE.cell));
+  LAKE.cur=new Float32Array(LAKE.gw*LAKE.gh);
+  LAKE.prev=new Float32Array(LAKE.gw*LAKE.gh);
+  LAKE.cvs=document.createElement('canvas');
+  LAKE.cvs.width=LAKE.gw;LAKE.cvs.height=LAKE.gh;
+  LAKE.ictx=LAKE.cvs.getContext('2d');
+  LAKE.img=LAKE.ictx.createImageData(LAKE.gw,LAKE.gh);
+  LAKE.awake=false;
+}
+function lakeSplash(x,y,amp){
+  if(!LAKE.cur)return;
+  const gx=Math.round(x/LAKE.cell),gy=Math.round(y/LAKE.cell);
+  for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){
+    const r2=dx*dx+dy*dy;if(r2>5)continue;
+    const X=gx+dx,Y=gy+dy;
+    if(X<1||Y<1||X>=LAKE.gw-1||Y>=LAKE.gh-1)continue;
+    LAKE.cur[Y*LAKE.gw+X]-=amp*(1-r2/6);
+  }
+}
+function lakeClick(x,y){
+  const now=performance.now();
+  LAKE.clicks=LAKE.clicks.filter(t=>now-t<2000);
+  LAKE.clicks.push(now);
+  LAKE.lastInput=now;
+  if(LAKE.awake){
+    lakeSplash(x,y,2.4+Math.min(LAKE.clicks.length,8)*0.4);
+  }else if(LAKE.clicks.length>=4){
+    LAKE.awake=true;
+    lakeSplash(x,y,5);
+    award('waves');
+  }
+}
+function lakeStepDraw(ctx){
+  const gw=LAKE.gw,gh=LAKE.gh,cur=LAKE.cur,prev=LAKE.prev,damp=0.982;
+  for(let y=1;y<gh-1;y++){
+    let i=y*gw+1;
+    for(let x=1;x<gw-1;x++,i++){
+      prev[i]=(((cur[i-1]+cur[i+1]+cur[i-gw]+cur[i+gw])*0.5)-prev[i])*damp;
+    }
+  }
+  const t=LAKE.cur;LAKE.cur=LAKE.prev;LAKE.prev=t;
+  const d=LAKE.img.data,c=LAKE.cur;
+  let energy=0;
+  for(let y=1;y<gh-1;y++){
+    for(let x=1;x<gw-1;x++){
+      const i=y*gw+x;
+      const l=(c[i+1]-c[i-1])+(c[i+gw]-c[i-gw]);
+      const p=i*4;
+      if(l>0){d[p]=150;d[p+1]=225;d[p+2]=250;d[p+3]=Math.min(140,l*56);}
+      else{d[p]=2;d[p+1]=8;d[p+2]=18;d[p+3]=Math.min(128,-l*46);}
+      energy+=Math.abs(c[i]);
+    }
+  }
+  LAKE.energy=energy/(gw*gh);
+  LAKE.ictx.putImageData(LAKE.img,0,0);
+  ctx.save();
+  ctx.imageSmoothingEnabled=true;
+  ctx.drawImage(LAKE.cvs,0,0,RAIN.W,RAIN.H);
+  ctx.restore();
+  if(performance.now()-LAKE.lastInput>4000&&LAKE.energy<0.0045){
+    LAKE.awake=false;LAKE.cur.fill(0);LAKE.prev.fill(0);
+  }
+}
+
+function kickstartRunners(){
+  RAIN.runners.push({x:RAIN.W*(0.15+Math.random()*0.3),y:-16,r:9+Math.random()*2.2,vy:30,drift:(Math.random()-0.5)*10,seed:Math.random()*7,shed:0});
+  RAIN.runners.push({x:RAIN.W*(0.55+Math.random()*0.35),y:RAIN.H*0.28,r:8.6+Math.random()*2,vy:20,drift:(Math.random()-0.5)*10,seed:Math.random()*7,shed:0});
+}
+function toggleRain(){
+  RAIN.enabled=!RAIN.enabled;
+  const btn=document.getElementById('rainToggle');
+  btn.setAttribute('aria-pressed',RAIN.enabled);
+  document.getElementById('rainToggleTxt').textContent=RAIN.enabled?'Turn off droplets':'Turn on droplets';
+  if(!RAIN.enabled){RAIN.ctx.clearRect(0,0,RAIN.W,RAIN.H);LAKE.awake=false;if(LAKE.cur){LAKE.cur.fill(0);LAKE.prev.fill(0);}}
+  else{RAIN.last=0;if(RAIN.runners.length===0)kickstartRunners();RAIN.raf=requestAnimationFrame(rainFrame);}
+}
+
+/* Droplet sprite cache: the 5-layer gradient render is drawn once per
+   size bucket into an offscreen canvas, then each frame is a cheap
+   drawImage blit. Keeps the main thread free so scrolling stays smooth. */
+const SPRITES=new Map();
+function dropSprite(r){
+  const key=Math.max(2,Math.round(r*2));
+  let s=SPRITES.get(key);
+  if(s)return s;
+  const rr=key/2, pad=Math.ceil(rr*2.7), size=pad*2;
+  const c=document.createElement('canvas');
+  c.width=c.height=Math.ceil(size*RAIN.dpr);
+  const x=c.getContext('2d');
+  x.setTransform(RAIN.dpr,0,0,RAIN.dpr,0,0);
+  x.translate(pad,pad);
+  /* cast shadow, offset down-right, soft */
+  let sh=x.createRadialGradient(rr*0.25,rr*0.55,rr*0.1,rr*0.25,rr*0.55,rr*1.5);
+  sh.addColorStop(0,'rgba(0,0,0,0.30)');sh.addColorStop(1,'rgba(0,0,0,0)');
+  x.fillStyle=sh;x.beginPath();x.arc(rr*0.25,rr*0.55,rr*1.5,0,7);x.fill();
+  /* body: lens effect — slightly light core, darker compressed rim */
+  let body=x.createRadialGradient(-rr*0.15,-rr*0.2,rr*0.1,0,0,rr);
+  body.addColorStop(0,'rgba(190,235,255,0.14)');
+  body.addColorStop(0.5,'rgba(110,180,225,0.07)');
+  body.addColorStop(0.82,'rgba(15,35,60,0.16)');
+  body.addColorStop(1,'rgba(8,18,32,0.32)');
+  x.fillStyle=body;x.beginPath();x.arc(0,0,rr,0,7);x.fill();
+  /* bottom caustic: light focused through the drop */
+  x.strokeStyle='rgba(140,215,250,0.35)';x.lineWidth=Math.max(0.6,rr*0.16);
+  x.beginPath();x.arc(0,0,rr*0.82,Math.PI*0.18,Math.PI*0.82);x.stroke();
+  /* rim light, faint full ring */
+  x.strokeStyle='rgba(170,225,250,0.14)';x.lineWidth=Math.max(0.5,rr*0.07);
+  x.beginPath();x.arc(0,0,rr*0.97,0,7);x.stroke();
+  /* specular highlights: primary + secondary */
+  x.fillStyle='rgba(255,255,255,0.85)';
+  x.beginPath();x.ellipse(-rr*0.38,-rr*0.42,Math.max(0.5,rr*0.2),Math.max(0.4,rr*0.13),-0.7,0,7);x.fill();
+  x.fillStyle='rgba(255,255,255,0.35)';
+  x.beginPath();x.arc(rr*0.3,rr*0.15,Math.max(0.3,rr*0.07),0,7);x.fill();
+  s={c,pad};
+  SPRITES.set(key,s);
+  return s;
+}
+function drawDrop(ctx,xp,yp,r,stretch=1,alpha=1){
+  const s=dropSprite(r);
+  ctx.save();ctx.globalAlpha=alpha;ctx.translate(xp,yp);
+  if(stretch!==1)ctx.scale(1,stretch);
+  ctx.drawImage(s.c,-s.pad,-s.pad,s.pad*2,s.pad*2);
+  ctx.restore();
+}
+
+let LAST_SCROLL=-9999;
+let scrollCls=null;
+addEventListener('scroll',()=>{
+  LAST_SCROLL=performance.now();
+  if(!scrollCls)document.documentElement.classList.add('is-scrolling');
+  clearTimeout(scrollCls);
+  scrollCls=setTimeout(()=>{document.documentElement.classList.remove('is-scrolling');scrollCls=null;},160);
+},{passive:true});
+function rainFrame(t){
+  if(!RAIN.enabled)return;
+  RAIN.raf=requestAnimationFrame(rainFrame);
+  if(document.hidden)return;
+  if(t-LAST_SCROLL<140){RAIN.last=t;return;} /* scrolling: hold last frame */
+  if(!RAIN.last)RAIN.last=t;
+  const dt=Math.min(48,t-RAIN.last);RAIN.last=t;
+  const ctx=RAIN.ctx;ctx.clearRect(0,0,RAIN.W,RAIN.H);
+
+  /* the lake, when awake: one integrated physics + render + sleep pass */
+  if(LAKE.awake)lakeStepDraw(ctx);
+
+  /* condensation: statics grow slowly; trail droplets decay instead */
+  const maxStatics=Math.min(25,RAIN.W*RAIN.H/70000);
+  for(let i=RAIN.statics.length-1;i>=0;i--){
+    const s=RAIN.statics[i];
+    if(s.decay){s.r-=dt*0.0026;if(s.r<=0.6){RAIN.statics.splice(i,1);continue;}}
+    else s.r+=dt*0.00042*(0.5+Math.sin(s.seed)*0.5+0.5);
+    /* heavy drop breaks loose */
+    if(!s.decay&&s.r>8.4+((s.seed*97)%17)/3.2&&RAIN.runners.length<5&&Math.random()<0.008){
+      RAIN.runners.push({x:s.x,y:s.y,r:s.r,vy:6,drift:(Math.random()-0.5)*10,seed:s.seed,shed:0});
+      RAIN.statics.splice(i,1);
+    }
+  }
+  if(RAIN.statics.length<maxStatics&&Math.random()<0.03)RAIN.statics.push(newStatic());
+
+  /* runners: gravity, wobble, shedding, absorption, stalling */
+  for(let i=RAIN.runners.length-1;i>=0;i--){
+    const d=RAIN.runners[i];
+    d.vy+=dt*0.012*(d.r/7.5);d.vy=Math.min(d.vy,90+d.r*9);
+    /* occasional stall-and-release, characteristic of glass */
+    if(Math.random()<0.004)d.vy*=0.25;
+    const wobble=Math.sin(t*0.004+d.seed*9)*0.35+d.drift*0.01;
+    const dy=d.vy*dt*0.016,dx=wobble*dt*0.06;
+    d.x+=dx;d.y+=dy;d.shed+=dy;
+    /* shed a micro-droplet trail */
+    if(d.shed>10+d.seed*4){
+      d.shed=0;
+      RAIN.statics.push({x:d.x+(Math.random()-0.5)*d.r*0.8,y:d.y-d.r*1.4,r:Math.min(4.4,d.r*0.28),seed:Math.random()*7,decay:true});
+      d.r-=d.r*0.012;
+    }
+    /* absorb smaller droplets in the path */
+    for(let j=RAIN.statics.length-1;j>=0;j--){
+      const s=RAIN.statics[j];
+      if(Math.abs(s.x-d.x)<d.r+s.r&&Math.abs(s.y-d.y)<d.r+s.r){
+        d.r=Math.min(18,Math.sqrt(d.r*d.r+s.r*s.r*0.7));
+        RAIN.statics.splice(j,1);
+      }
+    }
+    if(d.r<3.3){RAIN.statics.push(newStatic(d.x,d.y,d.r));RAIN.runners.splice(i,1);continue;}
+    if(d.y>RAIN.H+40){RAIN.runners.splice(i,1);continue;}
+  }
+
+  /* click ripple rings */
+  for(let i=RAIN.rings.length-1;i>=0;i--){
+    const g=RAIN.rings[i];g.r+=dt*0.07;g.a-=dt*0.0011;
+    if(g.a<=0){RAIN.rings.splice(i,1);continue;}
+    ctx.strokeStyle=`rgba(120,215,245,${g.a})`;ctx.lineWidth=1.4;
+    ctx.beginPath();ctx.arc(g.x,g.y,g.r,0,7);ctx.stroke();
+  }
+
+  /* draw: statics first, runners on top with motion stretch */
+  for(const s of RAIN.statics)drawDrop(ctx,s.x,s.y,s.r,1,s.decay?0.8:1);
+  for(const d of RAIN.runners)drawDrop(ctx,d.x,d.y,d.r,1+Math.min(d.vy/95,0.65),1);
+}
+initRain();
+if(!RAIN.enabled){
+  document.getElementById('rainToggle').setAttribute('aria-pressed','false');
+  document.getElementById('rainToggleTxt').textContent='Turn on droplets';
+}
+
+/* number roll-up */
+function rollNum(el,litres){
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce){el.innerHTML=`<span class="approx">≈</span>${fmtVol(litres)}`;return;}
+  const dur=900,t0=performance.now();
+  function frame(t){
+    const p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,3);
+    el.innerHTML=`<span class="approx">≈</span>${fmtVol(litres*e)}`;
+    if(p<1)requestAnimationFrame(frame);else el.innerHTML=`<span class="approx">≈</span>${fmtVol(litres)}`;
+  }
+  requestAnimationFrame(frame);
+}
+
+/* =====================================================================
+   NAVIGATION
+===================================================================== */
+const views=['home','calc','result','about'];
+let aboutReturn='home';
+function openAbout(){
+  aboutReturn=views.find(v=>!document.getElementById('view-'+v).classList.contains('hidden'))||'home';
+  if(aboutReturn==='about')aboutReturn='home';
+  go('about');
+}
+function closeAbout(){go(aboutReturn);}
+function go(v){
+  views.forEach(x=>document.getElementById('view-'+x).classList.toggle('hidden',x!==v));
+  document.querySelectorAll('[data-nav]').forEach(b=>b.classList.toggle('active',b.dataset.nav===v));
+  window.scrollTo({top:0,behavior:'auto'});
+}
+
+/* =====================================================================
+   HOMEPAGE: demos, quiz, explorer, references
+===================================================================== */
+const DEMOS={
+  chat:{steps:[['Prompt',0],['30 responses back and forth',0],['Some complex reasoning',0]],state:{task:'chat',provider:'unsure',convLen:'long',reasoning:'some'}},
+  image:{steps:[['Prompt',0],['10 image generations',0],['A few versions rejected',1],['Final chosen + upscaled',0]],state:{task:'image',provider:'unsure',imgCount:'several',versions:'few',upscale:'yes'}},
+  video:{steps:[['Prompt',0],['First generation',0],["Didn't like it",1],['Regenerate ×2',1],['Upscale final',0]],state:{task:'video',provider:'unsure',vidCount:'one',vidDur:'s10',vidRes:'hd',retries:'few'}},
+  coding:{steps:[['Open the coding assistant',0],['Regular back-and-forth for an afternoon',0],['A burst of agent activity',1]],state:{task:'coding',provider:'unsure',codeDur:'h4',codeIntensity:'regular',codeUses:['write']}}
+};
+let lastDemoKey=null,prefilled=false;
+const DEMO_CTA={chat:'Calculate my chat task',image:'Calculate my image task',video:'Calculate my video task',coding:'Calculate my coding task'};
+function runDemo(k){
+  lastDemoKey=k;
+  const d=DEMOS[k],box=document.getElementById('tryResult'),stepsEl=document.getElementById('trySteps'),numEl=document.getElementById('tryNum');
+  box.classList.add('show');
+  document.getElementById('tryCta').textContent=DEMO_CTA[k]||'Calculate mine';
+  setTimeout(()=>box.scrollIntoView({block:'nearest',behavior:'smooth'}),60);
+  stepsEl.innerHTML=d.steps.map(([t,r])=>`<div class="try-step${r?' retry':''}"><span class="dot"></span>${t}</div>`).join('');
+  numEl.innerHTML='';
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const rows=[...stepsEl.children];
+  rows.forEach((el,i)=>setTimeout(()=>el.classList.add('on'),reduce?0:i*420));
+  setTimeout(()=>{
+    const r=estimate(d.state);
+    numEl.innerHTML=`≈${fmtVol(r.total.p50)}<small>likely ${fmtRange(r.total.p10,r.total.p90)} · estimated, not measured · a general example, yours will differ</small>`;
+  },reduce?0:rows.length*420);
+}
+/* Demo CTA: the user calculates their OWN task of this kind — same path,
+   task pre-selected, every variable answered by them. */
+function startFromDemoTask(){
+  if(!lastDemoKey)return startCalc();
+  startCalcTask(DEMOS[lastDemoKey].state.task);
+}
+/* Challenge entry: same task pre-selected, user answers the rest. */
+function startCalcTask(task){
+  cState={task};userGuess=null;prefilled=false;
+  rebuildSteps();cIdx=1;go('calc');renderStep();
+}
+function adjustAnswers(){
+  prefilled=false;userGuess=null;go('calc');renderReview();
+}
+
+/* Water Sense quiz */
+const QUIZ=[
+  {q:'Which likely carries the bigger water footprint?',opts:['One 10-second AI video','A hundred quick chat replies'],right:0,
+   why:'Measured research puts a single short AI video in the tens to hundreds of watt-hours, while a hundred efficient text replies total only a few dozen watt-hours [1][3]. Video is the heavyweight.'},
+  {q:'When a data centre "consumes" cooling water, the water mostly…',opts:['Evaporates into the air','Gets polluted','Disappears forever'],right:0,
+   why:"Evaporative cooling turns liquid water into vapour that rejoins the water cycle, often far from where it was drawn. It isn't destroyed, but it's no longer available locally [6]."},
+  {q:'Which provider has published measured per-prompt energy and water figures?',opts:['Google (Gemini)','Every major provider','None of them'],right:0,
+   why:'Google published production measurements for the median Gemini text prompt in August 2025 [1]. Mistral published a lifecycle study [10]. Most others have published little or nothing per prompt.'}
+];
+let quizIdx=0,quizScore=0;
+function renderQuiz(){
+  const box=document.getElementById('quizBox');
+  if(quizIdx>=QUIZ.length){
+    const titles=quizScore===3?'Hydro-genius. Full marks.':quizScore===2?'Making waves. Nearly there.':'Just getting your feet wet.';
+    if(quizScore===3)award('sense');
+    box.innerHTML=`<div class="quiz-score">${quizScore} / ${QUIZ.length} · ${titles}</div>
+      <p style="color:var(--text-dim);margin-top:8px">Now try the real thing with one of your own AI tasks.</p>
+      <div style="display:flex;gap:12px;margin-top:18px;flex-wrap:wrap">
+        <button class="btn btn-primary btn-small" onclick="startCalc()">Calculate my AI task</button>
+        <button class="btn btn-ghost btn-small" onclick="quizIdx=0;quizScore=0;renderQuiz()">Play again</button>
+      </div>`;
+    return;
+  }
+  const q=QUIZ[quizIdx];
+  box.innerHTML=`<div class="quiz-prog">Question ${quizIdx+1} of ${QUIZ.length}</div>
+    <div class="quiz-q">${q.q}</div>
+    <div class="quiz-opts">${q.opts.map((o,i)=>`<button data-i="${i}">${o}</button>`).join('')}</div>
+    <div id="quizReveal"></div>`;
+  box.querySelectorAll('.quiz-opts button').forEach(b=>b.addEventListener('click',()=>{
+    const i=+b.dataset.i,btns=box.querySelectorAll('.quiz-opts button');
+    btns.forEach(x=>x.disabled=true);
+    btns[q.right].classList.add('right');
+    if(i===q.right){quizScore++;}else{b.classList.add('wrong');}
+    document.getElementById('quizReveal').innerHTML=`<div class="quiz-reveal">${i===q.right?'Correct. ':'Not quite. '}${q.why}
+      <div style="margin-top:10px"><button class="btn btn-small btn-ghost" onclick="quizIdx++;renderQuiz()">${quizIdx===QUIZ.length-1?'See my score':'Next question'}</button></div></div>`;
+  }));
+}
+renderQuiz();
+
+/* Explorer + references render */
+document.getElementById('provGrid').innerHTML=EXPLORER.map(p=>{
+  const badge=p.strength==='strong'?'<span class="ev-badge ev-strong">Strong evidence</span>':p.strength==='partial'?'<span class="ev-badge ev-partial">Partial evidence</span>':'<span class="ev-badge ev-weak">Weak evidence</span>';
+  const marks={yes:'<span class="k-yes">✓</span>',no:'<span class="k-no">?</span>',est:'<span class="k-est">~</span>'};
+  return `<div class="prov-card"><h3>${p.name} ${badge}</h3><ul>${p.know.map(([m,t])=>`<li>${marks[m]}${t}</li>`).join('')}</ul></div>`;
+}).join('');
+document.getElementById('refList').innerHTML=REFS.map(r=>`<li><div><b>${r.title}</b>. ${r.pub}, ${r.date}. <a href="${r.url}" target="_blank" rel="noopener">${r.url.replace('https://','')}</a><span class="ref-note">${r.note}</span></div></li>`).join('');
+
+/* =====================================================================
+   CALCULATOR
+===================================================================== */
+let cState={},cSteps=[],cIdx=0,userGuess=null;
+
+const STEP_DEFS={
+  task:{crumb:'About your task',title:'What did you make with AI?',help:'Pick the closest everyday task. We handle the technical details behind the scenes.',
+    opts:[
+      {v:'chat',ico:'💬',t:'Chat or research',s:'questions, homework help, deep research'},
+      {v:'image',ico:'🖼️',t:'Image',s:'art, edits, room redesigns, social posts'},
+      {v:'video',ico:'🎬',t:'Video',s:'clips, ads, that cat-and-alligator masterpiece'},
+      {v:'coding',ico:'💻',t:'Coding or vibe-coded website',s:'apps, sites, scripts, agents'}
+    ],set:(s,v)=>{s.task=v;}},
+  provider:{crumb:'Your AI tool',title:'Which AI tool did you use?',help:"Pick the closest one. It's fine if you're not sure. Catalogue reviewed August 2026.",
+    xnote:'The tool determines which evidence path the estimator can use: a production measurement, a provider claim, or independent open-model benchmarks.',
+    opts:s=>{
+      const byTask={
+        chat:['gemini','chatgpt','claude','copilot','grok','deepseek','mistral'],
+        image:['midjourney','nanobanana','gptimage','flux','ideogram','firefly'],
+        video:['veo','kling','runway','hailuo','seedance','wan','luma','pika'],
+        coding:['cursor','claudecode','copilot','chatgpt','windsurf']
+      };
+      return [...byTask[s.task].map(k=>({v:k,t:PROVIDERS[k].name})),{v:'retired',t:PROVIDERS.retired.name},{v:'multiple',t:'I used more than one'},{v:'unsure',t:"I'm not sure"}];
+    },set:(s,v)=>{s.provider=v;}},
+  convLen:{when:s=>s.task==='chat',crumb:'Your conversation',title:'About how much AI conversation was involved?',
+    help:'A rough sense is all we need. You never have to know what a token is.',
+    xnote:'Response counts map to per-response energy drawn from the strongest available evidence path for your tool, then aggregate across the session.',
+    opts:[
+      {v:'quick',t:'Quick question',s:'around 1–3 responses'},
+      {v:'short',t:'Short conversation',s:'around 5–15 responses'},
+      {v:'long',t:'Long session',s:'around 15–50 responses'},
+      {v:'research',t:'Very long or research session',s:'50+ responses'}
+    ],exact:{label:'I know the exact number of responses',key:'exactResponses',unit:'responses'},set:(s,v)=>{s.convLen=v;}},
+  reasoning:{when:s=>s.task==='chat',crumb:'Your conversation',title:'Was the AI doing lots of complex reasoning or research?',
+    help:'Reasoning and deep-research modes run the model much harder, measured at roughly thirty times more energy on average.',
+    xnote:'Reasoning multiplier: tri(2, 8, 30) applied to the reasoning fraction of responses, per AI Energy Score v2 measurements [5].',
+    opts:[
+      {v:'none',t:'Mostly normal conversation'},{v:'some',t:'Some complex reasoning'},
+      {v:'lots',t:'A lot of research or reasoning'},{v:'unsure',t:'Not sure'}
+    ],set:(s,v)=>{s.reasoning=v;}},
+  imgCount:{when:s=>s.task==='image',crumb:'Your images',title:'About how many images did you keep?',
+    xnote:'Each attempt draws energy tri(0.3, 2.9, 11.5) Wh from measured benchmarks spanning 88 models [2].',
+    opts:[{v:'one',t:'Just 1'},{v:'few',t:'2–5'},{v:'several',t:'6–10'},{v:'many',t:'More than 10'}],
+    exact:{label:'Enter exact number',key:'exactImages',unit:'images'},set:(s,v)=>{s.imgCount=v;}},
+  versions:{when:s=>s.task==='image',crumb:'Your images',title:'Did you make versions you threw away?',
+    help:'Regenerating usually means running the AI again, so discarded versions count too.',
+    opts:[{v:'none',t:'No, first try'},{v:'few',t:'A few extra versions'},{v:'lots',t:'Lots of versions'},{v:'unsure',t:'Not sure'}],set:(s,v)=>{s.versions=v;}},
+  upscale:{when:s=>s.task==='image',crumb:'Your images',title:'Did you upscale the final image?',
+    opts:[{v:'yes',t:'Yes'},{v:'no',t:'No'},{v:'unsure',t:'Not sure'}],set:(s,v)=>{s.upscale=v;}},
+  vidCount:{when:s=>s.task==='video',crumb:'Your video',title:'About how many videos did you generate?',
+    opts:[{v:'one',t:'1'},{v:'few',t:'2–5'},{v:'several',t:'6–10'},{v:'many',t:'More than 10'}],
+    exact:{label:'Enter exact number',key:'exactVideos',unit:'videos'},set:(s,v)=>{s.vidCount=v;}},
+  vidDur:{when:s=>s.task==='video',crumb:'Your video',title:'About how long were they?',
+    xnote:'Within one native clip (tri(5, 8, 12) s), energy ∝ (duration/5s)^tri(1.5, 1.9, 2.1) [3][4]. Beyond that, commercial tools stitch clips, so energy scales linearly across segments [11].',
+    opts:[{v:'s5',t:'~5 seconds'},{v:'s10',t:'~10 seconds'},{v:'s30',t:'~30 seconds'},{v:'m1',t:'1 minute or more'}],set:(s,v)=>{s.vidDur=v;}},
+  vidRes:{when:s=>s.task==='video',crumb:'Your video',title:'What quality did you generate?',
+    help:'Commercial 4K is usually an HD generation plus an upscale pass. Native 4K diffusion would cost far more, so the multiplier carries a wide range.',
+    opts:[{v:'std',t:'Standard'},{v:'hd',t:'HD / 1080p'},{v:'uhd',t:'4K / high quality'},{v:'unsure',t:'Not sure'}],set:(s,v)=>{s.vidRes=v;}},
+  retries:{when:s=>s.task==='video',crumb:'Your video',title:'How many versions did you throw away or redo?',
+    help:'Regenerating usually means running the AI again. Discarded attempts often dominate a video project.',
+    opts:[{v:'none',t:'None'},{v:'few',t:'1–2'},{v:'several',t:'3–5'},{v:'lots',t:'Lots'},{v:'unsure',t:'Not sure'}],set:(s,v)=>{s.retries=v;}},
+  codeUses:{when:s=>s.task==='coding',crumb:'Your coding',title:'What were you using AI for?',multi:true,
+    help:'Pick everything that applies.',
+    opts:[
+      {v:'questions',t:'Asking coding questions'},{v:'write',t:'Writing code'},{v:'build',t:'Building most of a project'},
+      {v:'debug',t:'Debugging'},{v:'agent',t:'An autonomous agent'},{v:'assets',t:'Generating images or assets'}
+    ],set:(s,v)=>{s.codeUses=v;}},
+  codeDur:{when:s=>s.task==='coding',crumb:'Your coding',title:'Roughly how long were you working with it?',
+    opts:[{v:'h05',t:'Under 30 minutes'},{v:'h1',t:'1–2 hours'},{v:'h4',t:'Half a day'},{v:'h8',t:'A full day'},{v:'days',t:'Several days'}],set:(s,v)=>{s.codeDur=v;}},
+  codeIntensity:{when:s=>s.task==='coding',crumb:'Your coding',title:'How active was the AI?',
+    xnote:'Sessions decompose into request rates tri(low, mode, high) per hour by intensity, times per-request energy logN(0.2, 1.0, 8) Wh. Graded D: manual coding estimates are honestly rough [5].',
+    opts:[
+      {v:'occasional',t:'Occasional assistance'},{v:'regular',t:'Regular back-and-forth'},
+      {v:'heavy',t:'The AI did most of the work'},{v:'agent',t:'An agent working repeatedly'}
+    ],set:(s,v)=>{s.codeIntensity=v;}}
+};
+
+const FLOW=['task','provider','convLen','reasoning','imgCount','versions','upscale','vidCount','vidDur','vidRes','retries','codeUses','codeDur','codeIntensity'];
+const QUICK_TEMPLATES=[
+  {ico:'💬',t:'A long chat session',s:'~30 responses, some reasoning',state:{task:'chat',provider:'unsure',convLen:'long',reasoning:'some'}},
+  {ico:'🖼️',t:'An image project',s:'~8 kept, a few discarded, upscaled',state:{task:'image',provider:'unsure',imgCount:'several',versions:'few',upscale:'yes'}},
+  {ico:'🎬',t:'A short social video',s:'10 s, HD, a couple of retries',state:{task:'video',provider:'unsure',vidCount:'one',vidDur:'s10',vidRes:'hd',retries:'few'}},
+  {ico:'💻',t:'An afternoon of coding',s:'regular back-and-forth',state:{task:'coding',provider:'unsure',codeDur:'h4',codeIntensity:'regular',codeUses:['write']}}
+];
+/* Most statistically common answer per step, for one-tap skipping. */
+const DEFAULTS={convLen:'short',reasoning:'some',imgCount:'few',versions:'few',upscale:'no',vidCount:'one',vidDur:'s10',vidRes:'hd',retries:'few',codeDur:'h1',codeIntensity:'regular'};
+const SHORT_LABELS={task:'Task',provider:'Tool',convLen:'Conversation',reasoning:'Reasoning',imgCount:'Images kept',versions:'Discarded versions',upscale:'Upscaled',vidCount:'Videos',vidDur:'Length',vidRes:'Quality',retries:'Discarded attempts',codeUses:'Used for',codeDur:'Duration',codeIntensity:'AI activity'};
+
+/* Compact answer summary for the review screen and the receipt. */
+function answerSummary(s){
+  s=s||cState;
+  const steps=FLOW.filter(k=>{const d=STEP_DEFS[k];return !d.when||d.when(s);});
+  const out=[];
+  for(const key of steps){
+    const def=STEP_DEFS[key];
+    const opts=typeof def.opts==='function'?def.opts(s):def.opts;
+    let v=s[key],label='—',answered;
+    if(def.multi){
+      answered=!!(v&&v.length);
+      if(answered)label=v.map(x=>{const o=opts.find(o=>o.v===x);return o?o.t:x;}).join(', ');
+    }else{
+      answered=v!=null;
+      const o=opts.find(o=>o.v===v);
+      if(o)label=o.t;
+      if(def.exact&&s[def.exact.key])label=`${s[def.exact.key]} ${def.exact.unit}`;
+    }
+    out.push({key,q:SHORT_LABELS[key]||def.crumb,a:label,answered});
+  }
+  return out;
+}
+function firstUnanswered(){return answerSummary().findIndex(x=>!x.answered);}
+
+let calcScreen='question',editReturn=false;
+
+function renderReview(){
+  calcScreen='review';
+  sealSideVessel();
+  window.scrollTo({top:0,behavior:'auto'});
+  rebuildSteps();
+  const prog=document.getElementById('progress');
+  prog.innerHTML=cSteps.map(()=>'<i class="done"></i>').join('')+'<i></i>';
+  document.getElementById('calcCrumb').textContent='Check your answers';
+  const rows=answerSummary();
+  const qa=document.getElementById('qArea');
+  qa.innerHTML=`
+    <h2 class="q-title">Does this look right?</h2>
+    <p class="q-help">${prefilled?"We've filled these in from the example. ":''}Tap anything to change it. Your estimate stays sealed until after your guess.</p>
+    <div class="rev-list">${rows.map(r=>`<button class="rev-row" data-k="${r.key}"><span class="rev-q">${r.q}</span><span class="rev-a">${r.a}</span><span class="rev-edit">edit</span></button>`).join('')}</div>
+    <div class="calc-nav"><button class="btn btn-primary" onclick="renderGuess()">Looks right, show me the results</button></div>`;
+  qa.querySelectorAll('.rev-row').forEach(b=>b.addEventListener('click',()=>{
+    editReturn=true;
+    cIdx=Math.max(0,cSteps.indexOf(b.dataset.k));
+    renderStep();
+  }));
+}
+
+function startCalc(){cState={};cIdx=0;userGuess=null;prefilled=false;editReturn=false;rebuildSteps();go('calc');renderStep();}
+function rebuildSteps(){cSteps=FLOW.filter(k=>{const d=STEP_DEFS[k];return !d.when||d.when(cState);});}
+
+function renderStep(){
+  calcScreen='question';
+  rebuildSteps();
+  const key=cSteps[cIdx],def=STEP_DEFS[key];
+  document.getElementById('calcCrumb').textContent=`${def.crumb} · ${cIdx+1} of ${cSteps.length+1}`;
+  window.scrollTo({top:0,behavior:'auto'});
+  const prog=document.getElementById('progress');
+  prog.innerHTML=cSteps.map((_,i)=>`<i class="${i<cIdx?'done':''}"></i>`).join('')+'<i></i>'; // final dot = guess step
+  const opts=typeof def.opts==='function'?def.opts(cState):def.opts;
+  const isMulti=!!def.multi;
+  const cur=cState[key];
+  const qa=document.getElementById('qArea');
+  qa.innerHTML=`
+    <h2 class="q-title">${def.title}</h2>
+    ${def.help?`<p class="q-help">${def.help}</p>`:''}
+    ${def.xnote?`<p class="q-xnote xp">${def.xnote}</p>`:''}
+    <div class="opt-grid" role="${isMulti?'group':'radiogroup'}">
+      ${opts.map(o=>`<button class="opt ${isMulti?((cur||[]).includes(o.v)?'sel':''):(cur===o.v?'sel':'')}" data-v="${o.v}" role="${isMulti?'checkbox':'radio'}" aria-checked="${isMulti?(cur||[]).includes(o.v):cur===o.v}">
+        ${o.ico?`<span class="ico">${o.ico}</span>`:''}${o.t}${o.s?`<small>${o.s}</small>`:''}
+      </button>`).join('')}
+    </div>
+    ${def.exact?`<div class="exact-row"><label style="font-size:14px;color:var(--text-dim)">${def.exact.label}: <input type="number" min="1" max="5000" id="exactInput" aria-label="${def.exact.label}"> ${def.exact.unit}</label></div>`:''}
+    ${DEFAULTS[key]&&!isMulti?`<div class="skip-row"><button class="linkish" id="skipTyp">Not sure? Use the typical answer: ${(opts.find(o=>o.v===DEFAULTS[key])||{}).t} →</button></div>`:''}
+    ${isMulti?`<div class="calc-nav"><button class="btn btn-primary" id="multiNext">Continue</button></div>`:''}
+    ${key==='task'?`<div class="tmpl-sec">
+      <div class="eyebrow" style="margin:30px 0 10px">Or skip ahead with a quick estimate</div>
+      <div class="tmpl-grid">${QUICK_TEMPLATES.map((t,i)=>`<button class="tmpl" data-i="${i}"><span>${t.ico}</span> ${t.t}<small>${t.s}</small></button>`).join('')}</div>
+      <p class="tmpl-note">A template fills in typical answers; you review them and tweak the one or two that matter before the reveal.</p>
+    </div>`:''}
+  `;
+  qa.querySelectorAll('.opt').forEach(b=>b.addEventListener('click',()=>{
+    const v=b.dataset.v;
+    if(isMulti){
+      const arr=cState[key]?[...cState[key]]:[];
+      const i=arr.indexOf(v);i>=0?arr.splice(i,1):arr.push(v);
+      def.set(cState,arr);
+      b.classList.toggle('sel');b.setAttribute('aria-checked',b.classList.contains('sel'));
+    }else{
+      def.set(cState,v);
+      if(def.exact){const ex=document.getElementById('exactInput');if(ex&&ex.value)cState[def.exact.key]=Math.max(1,parseInt(ex.value,10));}
+      advance();
+    }
+  }));
+  if(def.exact){
+    const ex=document.getElementById('exactInput');
+    ex.addEventListener('change',()=>{if(ex.value){cState[def.exact.key]=Math.max(1,parseInt(ex.value,10));def.set(cState,opts[0].v);advance();}});
+  }
+  if(isMulti)document.getElementById('multiNext').addEventListener('click',()=>{if(!(cState[key]||[]).length)def.set(cState,['write']);advance();});
+  const skip=document.getElementById('skipTyp');
+  if(skip)skip.addEventListener('click',()=>{def.set(cState,DEFAULTS[key]);advance();});
+  qa.querySelectorAll('.tmpl').forEach(b=>b.addEventListener('click',()=>{
+    const t=QUICK_TEMPLATES[+b.dataset.i];
+    cState=JSON.parse(JSON.stringify(t.state));
+    userGuess=null;prefilled=true;
+    rebuildSteps();cIdx=cSteps.length-1;
+    renderReview();
+  }));
+  updateSideVessel();
+}
+
+function advance(){
+  rebuildSteps();
+  if(editReturn){
+    editReturn=false;
+    const miss=firstUnanswered();
+    if(miss<0){renderReview();return;}
+    cIdx=miss;renderStep();return;
+  }
+  if(cIdx<cSteps.length-1){cIdx++;renderStep();}
+  else renderReview();
+}
+function calcBack(){
+  if(calcScreen==='guess'){renderReview();return;}
+  if(calcScreen==='review'){cIdx=cSteps.length-1;calcScreen='question';renderStep();return;}
+  if(cIdx>0){cIdx--;renderStep();}else go('home');
+}
+
+/* guess-the-footprint mini game */
+const GUESS_BUCKETS={
+  chat:[['Under 10 mL',0,0.01],['10–100 mL',0.01,0.1],['100 mL – 1 L',0.1,1],['Over 1 L',1,1e9]],
+  image:[['Under 50 mL',0,0.05],['50–250 mL',0.05,0.25],['250 mL – 1 L',0.25,1],['Over 1 L',1,1e9]],
+  video:[['Under 250 mL',0,0.25],['250 mL – 2 L',0.25,2],['2–10 L',2,10],['Over 10 L',10,1e9]],
+  coding:[['Under 100 mL',0,0.1],['100 mL – 1 L',0.1,1],['1–5 L',1,5],['Over 5 L',5,1e9]]
+};
+function renderGuess(){
+  calcScreen='guess';
+  sealSideVessel();
+  window.scrollTo({top:0,behavior:'auto'});
+  const prog=document.getElementById('progress');
+  prog.innerHTML=cSteps.map(()=>'<i class="done"></i>').join('')+'<i></i>';
+  document.getElementById('calcCrumb').textContent=`Your call · ${cSteps.length+1} of ${cSteps.length+1}`;
+  const buckets=GUESS_BUCKETS[cState.task];
+  const qa=document.getElementById('qArea');
+  qa.innerHTML=`
+    <h2 class="q-title">Your gut vs the engine</h2>
+    <p class="q-help">${prefilled?"We've filled in the example's answers for you. Tap Back to change any of them. ":''}One tap reveals the answer, and that tap is your guess. Pick the bracket you believe; match the engine's sealed result and the 💧 Water Whisperer badge is yours. Most people pick the wrong one.</p>
+    <div class="opt-grid">
+      ${buckets.map((b,i)=>`<button class="opt" data-i="${i}">💧 ${b[0]}</button>`).join('')}
+    </div>
+    <div class="skip-row"><button class="linkish" id="skipGuess">Skip the game, just show me →</button></div>`;
+  qa.querySelectorAll('.opt').forEach(b=>b.addEventListener('click',()=>{
+    userGuess=+b.dataset.i;
+    runCalculation();
+  }));
+  document.getElementById('skipGuess').addEventListener('click',()=>{userGuess=-1;runCalculation();});
+}
+
+/* Progress droplet gauge: fills with questions answered, never with the
+   estimate itself, so the guess step stays unspoiled. Rendered as a glossy
+   3D drop: gradient body, rim light, specular highlights, bottom caustic,
+   and an animated eight-point wave for the water surface. */
+function dropletGauge(frac,seal){
+  const f=Math.max(0.07,Math.min(1,frac));
+  const top=25.2-23.5*f;
+  const uid='dg'+(VSEQ++);
+  return `<svg class="vessel-svg" width="96" height="114" viewBox="0 0 22 26" role="img" aria-label="Progress: estimate ${seal?'sealed':Math.round(f*100)+'% built'}">
+    <defs>
+      <radialGradient id="${uid}b" cx=".35" cy=".28" r=".95">
+        <stop offset="0" stop-color="rgba(195,238,255,.18)"/>
+        <stop offset=".6" stop-color="rgba(110,180,225,.06)"/>
+        <stop offset="1" stop-color="rgba(10,24,44,.3)"/>
+      </radialGradient>
+      <linearGradient id="${uid}r" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="rgba(220,245,255,.95)"/>
+        <stop offset=".55" stop-color="rgba(150,205,240,.35)"/>
+        <stop offset="1" stop-color="rgba(130,190,230,.65)"/>
+      </linearGradient>
+      <clipPath id="${uid}c"><path d="M11 1C11 1 3 11.5 3 17a8 8 0 0 0 16 0C19 11.5 11 1 11 1Z"/></clipPath>
+      ${waterDefs(uid+'w')}
+    </defs>
+    <path d="M11 1C11 1 3 11.5 3 17a8 8 0 0 0 16 0C19 11.5 11 1 11 1Z" fill="url(#${uid}b)" stroke="url(#${uid}r)" stroke-width="1.1"/>
+    <g clip-path="url(#${uid}c)">
+      ${waveSurface(0,22,top,26.5,0.55,0.45,2.6,`url(#${uid}w)`)}
+    </g>
+    <path d="M6.1 20.6 a5.6 5.6 0 0 0 9.8 0" stroke="rgba(140,215,250,.45)" stroke-width=".8" fill="none"/>
+    <ellipse cx="7.7" cy="8.8" rx="1.4" ry="3" transform="rotate(-24 7.7 8.8)" fill="rgba(255,255,255,.7)"/>
+    <circle cx="14.4" cy="14.3" r=".7" fill="rgba(255,255,255,.28)"/>
+    ${seal?'<text x="11" y="19.6" text-anchor="middle" font-size="9" font-weight="700" fill="#04121c">?</text>':''}
+  </svg>`;
+}
+function updateSideVessel(){
+  const holder=document.getElementById('sideVessel'),lab=document.getElementById('sideVesselLabel'),panel=document.getElementById('vesselPanel');
+  rebuildSteps();
+  const frac=cSteps.length?cIdx/cSteps.length:0;
+  holder.innerHTML=dropletGauge(frac,false);
+  lab.innerHTML=`Building your estimate<br><span style="font-size:11.5px">answer revealed at the end</span>`;
+  if(cIdx>0){panel.classList.remove('ripple');void panel.offsetWidth;panel.classList.add('ripple');}
+}
+function sealSideVessel(){
+  document.getElementById('sideVessel').innerHTML=dropletGauge(1,true);
+  document.getElementById('sideVesselLabel').innerHTML=`The engine's answer is sealed<br><span style="font-size:11.5px">your call first</span>`;
+}
+
+function runCalculation(){
+  const qa=document.getElementById('qArea');
+  document.getElementById('vesselPanel').style.visibility='hidden';
+  document.getElementById('calcCrumb').textContent='Building your estimate';
+  const steps=[
+    ['Matching your AI activity','Model and modality identified'],
+    ['Finding the best available measurements','Provider disclosures and independent benchmarks'],
+    ['Accounting for uncertainty','Cooling systems, electricity grid, 8,000 scenarios']
+  ];
+  qa.innerHTML=`
+  <div class="calc-card">
+    <div class="mech-mini anim" aria-hidden="true">
+      <svg viewBox="0 0 340 120" width="100%">
+        <defs><radialGradient id="coreMini"><stop offset="0%" stop-color="#c8f6ff"/><stop offset="45%" stop-color="#41d3f0"/><stop offset="100%" stop-color="#41d3f0" stop-opacity="0"/></radialGradient></defs>
+        <line x1="12" y1="28" x2="126" y2="28" class="flow-line"/>
+        <circle r="3" fill="#a5f1ff"><animateMotion dur="1.5s" repeatCount="indefinite" path="M12 28 H126"/></circle>
+        <text x="12" y="16" class="mech-label">PROMPT</text>
+        <polygon points="128,18 170,10 212,18 170,26" fill="#1c3350" stroke="rgba(143,134,242,.4)" stroke-width=".8"/>
+        <polygon points="128,18 170,26 170,52 128,44" fill="#12233c"/>
+        <polygon points="170,26 212,18 212,44 170,52" fill="#0b1930"/>
+        <ellipse class="chip-core" cx="170" cy="18" rx="17" ry="6" fill="url(#coreMini)"/>
+        <path d="M150 50 C150 76 96 76 80 100" class="coolant"/>
+        <circle r="2.6" fill="#8feaff"><animateMotion dur="2.2s" repeatCount="indefinite" path="M80 100 C96 76 150 76 150 50"/></circle>
+        <text x="34" y="114" class="mech-label" fill="#41d3f0">COOLING WATER</text>
+        <path d="M190 50 C190 76 244 76 260 100" class="elec"/>
+        <circle r="2.2" fill="#b7aefc"><animateMotion dur="2.6s" repeatCount="indefinite" path="M260 100 C244 76 190 76 190 50"/></circle>
+        <text x="224" y="114" class="mech-label" fill="#8f86f2">POWER GRID WATER</text>
+      </svg>
+    </div>
+    <div class="cstep-list">
+      ${steps.map(s=>`<div class="cstep">
+        <span class="cstate"><span class="cspin"></span><span class="ctick">✓</span></span>
+        <span class="cbody"><b>${s[0]}</b><span>${s[1]}</span></span>
+      </div>`).join('')}
+    </div>
+    <div class="calc-bar"><i></i></div>
+    <div class="calc-foot">8,000 MONTE CARLO SCENARIOS · WATER MODEL v0.3</div>
+  </div>`;
+  const rows=[...qa.querySelectorAll('.cstep')];
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const result=estimate(cState);
+  rows.forEach((el,i)=>{
+    setTimeout(()=>el.classList.add('active'),reduce?0:i*260);
+    setTimeout(()=>{el.classList.remove('active');el.classList.add('done');},reduce?0:i*260+240);
+  });
+  setTimeout(()=>{document.getElementById('vesselPanel').style.visibility='';showResult(result);},reduce?80:950);
+}
+
+/* =====================================================================
+   RESULT
+===================================================================== */
+let lastResult=null,lastState=null;
+function toggleBranch(which){
+  document.getElementById('brCool').classList.toggle('open',which==='cool'?undefined:false);
+  const brC=document.getElementById('brCool'),brE=document.getElementById('brElec');
+  const fdC=document.getElementById('fdCool'),fdE=document.getElementById('fdElec');
+  if(which==='cool'){const on=!fdC.classList.contains('show');fdC.classList.toggle('show',on);fdE.classList.remove('show');brC.classList.toggle('open',on);brE.classList.remove('open');}
+  else{const on=!fdE.classList.contains('show');fdE.classList.toggle('show',on);fdC.classList.remove('show');brE.classList.toggle('open',on);brC.classList.remove('open');}
+}
+function openMethodology(){
+  const f=document.getElementById('foldMeth');if(f)f.open=true;
+  const d=document.getElementById('methDetails');d.open=true;
+  document.getElementById('methCard').scrollIntoView();
+  award('inspector');
+}
+
+function showResult(r){
+  lastResult=r;lastState=JSON.parse(JSON.stringify(cState));
+  go('result');
+  rollNum(document.getElementById('resNum'),r.total.p50);
+  const v=vesselSVG(r.total.p50,190);
+  document.getElementById('resVessel').innerHTML=v.svg+`<div style="font-size:12.5px;color:var(--text-faint);margin-top:8px">Illustrative size comparison · ${v.label}</div>`;
+  document.getElementById('resRange').innerHTML=
+    `<span class="ev-only">Usually between <b style="color:var(--text)">${fmtVol(r.total.p10)}</b> and <b style="color:var(--text)">${fmtVol(r.total.p90)}</b> · very unlikely to be under ${fmtVol(r.total.p05)}</span>`+
+    `<span class="xp">Almost certainly more than <b style="color:var(--text)" title="19 in 20 scenarios exceed this floor (P5)">${fmtVol(r.total.p05)}</b> · could reach ${fmtVol(r.total.p90)} · P10–P90 ${fmtRange(r.total.p10,r.total.p90)}</span>`;
+  const track=document.getElementById('rangeTrack');
+  track.innerHTML=`<div class="range-fill" style="left:6%;width:88%"></div><div class="range-mid" style="left:${6+88*Math.min(1,(r.total.p50-r.total.p05)/Math.max(r.total.p90-r.total.p05,1e-9))}%"></div>`;
+  document.getElementById('rlP10').innerHTML=`<span class="ev-only">${fmtVol(r.total.p10)}</span><span class="xp">${fmtVol(r.total.p05)} floor</span>`;
+  document.getElementById('rlP90').textContent=fmtVol(r.total.p90);
+
+  /* guess verdict */
+  const gv=document.getElementById('guessVerdict');
+  if(userGuess!=null&&userGuess>=0){
+    const b=GUESS_BUCKETS[lastState.task][userGuess];
+    const hit=r.total.p50>=b[1]&&r.total.p50<b[2];
+    gv.classList.remove('hidden');gv.classList.toggle('win',hit);
+    gv.innerHTML=hit?`🎯 Gut 1 · Engine 0. You called <b>${b[0]}</b> and nailed the bracket.`:`Engine 1 · Gut 0. You called <b>${b[0]}</b>; the answer landed elsewhere. That's exactly why measuring beats intuition.`;
+    if(hit)award('whisper');
+  }else{gv.classList.add('hidden');}
+
+  const confSym={high:'●',medium:'●',low:'●'},confTxt={high:'Tight estimate',medium:'Solid range',low:'Wide range · little provider disclosure'};
+  const gradeTxt={A:'Strong data',B:'Good estimate',C:'Approximate',D:'Rough estimate'};
+  document.getElementById('resBadges').innerHTML=
+    `<span class="badge conf-${r.confidence}"><span class="sym">${confSym[r.confidence]}</span>${confTxt[r.confidence]}</span>
+     <span class="badge"><span class="sym grade-${r.grade}">${r.grade}</span>Data quality · ${gradeTxt[r.grade]}</span>
+     <span class="badge"><span class="sym" style="color:var(--violet)">⚡</span>≈${r.energy.p50<1?Math.round(r.energy.p50*1000)+' Wh':r.energy.p50.toFixed(1)+' kWh'} estimated energy</span>`;
+  const plain={
+    high:`This kind of task has actually been measured by the company that runs it, so we're on solid ground. We just can't know which exact building handled your request, which is why there's still a small range.`,
+    medium:`We know which AI you used and how much you made. What no company tells anyone is which exact computers and cooling system did the work, so instead of one fake-precise number we show the realistic range.`,
+    low:`This company hasn't shared environmental numbers, so we worked it out from careful lab tests of similar AI systems. It's like estimating a neighbour's electricity bill: you can get the right ballpark without ever seeing the bill, and the range shows how sure we can honestly be.`
+  };
+  const plainXp={
+    high:`Expert: provider production measurement available for this modality [1]; residual spread from undisclosed per-request infrastructure (WUE, PUE, grid).`,
+    medium:`Expert: activity quantified from your answers; infrastructure unknowns (data centre, cooling system, grid mix) modelled as distributions across ${MC_N.toLocaleString('en-GB')} scenarios.`,
+    low:`Expert: no provider disclosure; energy extrapolated from independent open-model benchmarks [2][3][5], widened accordingly. Estimator path recorded below.`
+  };
+  document.getElementById('resPlain').textContent=plain[r.confidence];
+  document.getElementById('resPlainXp').textContent=plainXp[r.confidence];
+  document.getElementById('xpStrip').innerHTML=
+    `P5 ${fmtVol(r.total.p05)} · P10 ${fmtVol(r.total.p10)} · P50 ${fmtVol(r.total.p50)} · P90 ${fmtVol(r.total.p90)} · IT energy P50 ${(r.energy.p50*1000).toFixed(1)} Wh · direct ${fmtVol(r.direct.p50)} / electricity ${fmtVol(r.elec.p50)} · estimator ${r.estimatorId} · ${MC_N.toLocaleString('en-GB')} MC scenarios, hierarchical sampling`;
+
+  document.getElementById('fdCool').classList.remove('show');document.getElementById('fdElec').classList.remove('show');
+  document.getElementById('brCool').classList.remove('open');document.getElementById('brElec').classList.remove('open');
+
+  renderComparisons(r);renderBreakdown(r);renderFlow(r);renderKEU(r);renderWhatIf();renderMethodology(r);renderReceipt(r);
+  renderTuner(r);
+  prerenderShareCard();
+  /* analysis depth: expanded on desktop, folded to headlines on mobile */
+  const wide=innerWidth>880;
+  document.querySelectorAll('#view-result details.fold').forEach(d=>{d.open=(d.id==='foldMeth')?false:wide;});
+  if(MODE==='expert')setTimeout(()=>renderDensity(r),40);
+  document.getElementById('mcN').textContent=MC_N.toLocaleString('en-GB');
+  document.getElementById('manifest').textContent='Calculation manifest: '+METHODOLOGY;
+}
+
+function renderComparisons(r){
+  const L=r.total.p50;
+  document.getElementById('cmpTitle').textContent=`What everyday water use equals ${fmtVol(L)}?`;
+  document.getElementById('cmpRow').innerHTML=equivItems(L,4).map(it=>`<div class="cmp"><span class="c-ico">${it.ico}</span><b>${it.phrase}</b><small>${it.note}</small></div>`).join('');
+}
+
+function renderBreakdown(r){
+  const total=r.eventMed.reduce((a,b)=>a+b,0)||1;
+  const rows=r.events.map((e,i)=>({label:e.label,val:r.eventMed[i],retry:!e.accepted})).filter(x=>x.val>0).sort((a,b)=>b.val-a.val);
+  document.getElementById('bkArea').innerHTML=rows.map(x=>{
+    const p=Math.round(x.val/total*100);
+    return `<div class="bk-row"><div class="bk-head"><b>${x.label}${x.retry?' ↻':''}</b><span>≈${fmtVol(x.val)} · ${p}%</span></div>
+    <div class="bk-bar"><div class="bk-fill ${x.retry?'retry':''}" style="width:${Math.max(2,p)}%"></div></div></div>`;
+  }).join('');
+  const top=rows[0];
+  const retrySum=rows.filter(x=>x.retry).reduce((a,b)=>a+b.val,0);
+  let insight=`${top.label} dominated this estimate at around ${Math.round(top.val/total*100)}% of the footprint.`;
+  if(retrySum/total>0.25)insight+=` Discarded versions were about ${Math.round(retrySum/total*100)}% of the total. Drafting at standard quality and only rendering the winner in full usually cuts that by well over half — the pro tips card shows your numbers.`;
+  document.getElementById('bkInsight').textContent=insight;
+}
+
+function renderFlow(r){
+  document.getElementById('fbCool').textContent='≈'+fmtVol(r.direct.p50);
+  document.getElementById('fbElec').textContent='≈'+fmtVol(r.elec.p50);
+  document.getElementById('fbTotal').textContent='≈'+fmtVol(r.total.p50);
+}
+
+function renderKEU(r){
+  const s=lastState;
+  const know=[],est=[],unk=['Exact data centre','Cooling system used','Server hardware serving your request'];
+  know.push('Which AI service: '+r.prov.name);
+  if(s.task==='chat')know.push('Approximate conversation length');
+  if(s.task==='image')know.push('Number of images and versions');
+  if(s.task==='video'){know.push('Number of attempts and duration');know.push('Output quality');}
+  if(s.task==='coding')know.push('Session length and how active the AI was');
+  est.push('Energy the computation required');
+  est.push('Water intensity of the electricity grid');
+  if(r.textDef.grade==='A')know.push('Provider-measured energy per response [1]');
+  if(s.task==='video')est.push('Which video model and settings ran');
+  document.getElementById('keuKnow').innerHTML=know.map(x=>`<li>${x}</li>`).join('');
+  document.getElementById('keuEst').innerHTML=est.map(x=>`<li>${x}</li>`).join('');
+  document.getElementById('keuUnk').innerHTML=unk.map(x=>`<li>${x}</li>`).join('');
+  const [topName]=r.attr[0];const second=r.attr[1];
+  const plainNames={'Model compute energy':'how much computing the AI actually did','Cooling system (WUE)':'which cooling system was used','Electricity grid mix':'where the electricity came from','Facility overhead (PUE)':'how efficient the building is'};
+  document.getElementById('varInsight').innerHTML=
+    `Why isn't this one number? Mostly because nobody outside the company knows ${plainNames[topName]||topName.toLowerCase()}${second?`, and after that, ${plainNames[second[0]]||second[0].toLowerCase()}`:''}. Until companies share that, a range is the honest answer.`+
+    `<span class="xp" style="display:block;margin-top:8px;font-family:var(--font-m);font-size:12.5px;color:var(--text-faint)">Variance attribution (squared log-correlation, normalised): ${r.attr.map(([k,v])=>`${k} ${Math.round(v*100)}%`).join(' · ')}</span>`;
+}
+
+function renderWhatIf(){
+  const s=lastState,opts=[];
+  if(s.task==='video'){
+    if(s.retries&&s.retries!=='none')opts.push({id:'noretry',t:'No discarded versions',apply:x=>{x.retries='none';}});
+    if(s.vidRes==='uhd'||s.vidRes==='hd')opts.push({id:'lowres',t:'Standard-quality drafts',apply:x=>{x.vidRes='std';}});
+    if(s.vidDur!=='s5')opts.push({id:'short',t:'5-second drafts',apply:x=>{x.vidDur='s5';}});
+  }
+  if(s.task==='image'&&s.versions&&s.versions!=='none')opts.push({id:'noretry',t:'Fewer discarded versions',apply:x=>{x.versions='none';}});
+  if(s.task==='chat'){
+    if(s.reasoning==='lots'||s.reasoning==='some')opts.push({id:'noreason',t:'Standard mode instead of deep reasoning',apply:x=>{x.reasoning='none';}});
+    if(s.provider!=='gemini')opts.push({id:'prov',t:'A tool with production-measured disclosures',apply:x=>{x.provider='gemini';}});
+  }
+  if(s.task==='coding'&&s.codeIntensity!=='occasional')opts.push({id:'lighter',t:'Lighter AI involvement',apply:x=>{x.codeIntensity='occasional';}});
+  const box=document.getElementById('wiOpts');
+  if(!opts.length){box.innerHTML='<span style="color:var(--text-faint);font-size:14.5px">No big switchable levers on this task, but the pro tips below still apply.</span>';document.getElementById('wiCompare').innerHTML='';document.getElementById('wiNote').textContent='';renderHacks();renderIterSlider();return;}
+  box.innerHTML=opts.map((o,i)=>`<button class="wi-opt${i===0?' sel':''}" data-i="${i}">${o.t}</button>`).join('');
+  box.querySelectorAll('.wi-opt').forEach(b=>b.addEventListener('click',()=>{
+    box.querySelectorAll('.wi-opt').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');
+    applyWhatIf(opts[+b.dataset.i]);award('optimiser');
+  }));
+  applyWhatIf(opts[0]);
+  renderHacks();
+  renderIterSlider();
+}
+/* Task-aware efficiency tips. Where a lever maps onto the engine, the saving
+   is computed live from the user's own answers; behavioural tips stay
+   qualitative rather than borrowing unsourced percentages. */
+function computedSaving(mutate){
+  const alt=JSON.parse(JSON.stringify(lastState));mutate(alt);
+  const d=1-estimate(alt).total.p50/lastResult.total.p50;
+  return d>0.03?`≈${Math.round(d*100)}% lower on your task`:null;
+}
+function renderHacks(){
+  const s=lastState,tips=[];
+  if(s.task==='video'){
+    if(s.vidRes!=='std')tips.push({t:'Storyboard at standard quality and upscale only the winning take.',save:computedSaving(a=>{a.vidRes='std';})});
+    if(s.vidDur!=='s5')tips.push({t:'Draft at 5 seconds; extend only the final cut.',save:computedSaving(a=>{a.vidDur='s5';})});
+    tips.push({t:'Write a shot list before generating, so fewer takes get thrown away.',save:'often the biggest single lever'});
+  }
+  if(s.task==='image'){
+    if(s.versions&&s.versions!=='none')tips.push({t:'Explore with small batches and refine the prompt before big runs.',save:computedSaving(a=>{a.versions='none';})});
+    tips.push({t:'Keep drafts at standard quality; upscale one keeper at the end.',save:'draft settings cut per-image energy several-fold [2]'});
+  }
+  if(s.task==='chat'){
+    if(s.reasoning&&s.reasoning!=='none')tips.push({t:'Save reasoning or deep-research modes for the genuinely hard parts.',save:computedSaving(a=>{a.reasoning='none';})});
+    tips.push({t:'Use a lighter model for formatting, summaries and extraction.',save:'measured up to ~30× less energy per response [5]'});
+    tips.push({t:'State the output format you want in the first message; every avoided correction turn is a whole response saved.',save:'fewer turns, same result'});
+  }
+  if(s.task==='coding'){
+    if(s.codeIntensity==='agent'||s.codeIntensity==='heavy')tips.push({t:'Point agents at tight, well-scoped tasks rather than open-ended runs.',save:computedSaving(a=>{a.codeIntensity='regular';})});
+    tips.push({t:'Right-size the model: light models for boilerplate and regex, frontier models for architecture.',save:'~30× multiplier avoided on routine turns [5]'});
+    tips.push({t:'Batch related questions into one request instead of many small ones.',save:'less repeated context, fewer round-trips'});
+  }
+  document.getElementById('hackList').innerHTML=tips.filter(t=>t.save!==null).map(t=>`<div class="hack"><span>${t.t}</span><span class="h-save">${t.save}</span></div>`).join('');
+}
+/* Post-reveal iterations slider: drag discarded versions and watch the
+   estimate move. Only after the reveal, so the guess stays sealed. */
+const ITER_MAPS={
+  video:{key:'retries',steps:['none','few','several','lots'],labels:['0','1–2','3–5','lots'],title:'Discarded video versions'},
+  image:{key:'versions',steps:['none','few','lots'],labels:['none','a few','lots'],title:'Discarded image versions'}
+};
+function renderIterSlider(){
+  const box=document.getElementById('iterBox');
+  const m=ITER_MAPS[lastState.task];
+  if(!m){box.innerHTML='';return;}
+  const cur=Math.max(0,m.steps.indexOf(lastState[m.key]==='unsure'?'few':lastState[m.key]));
+  box.innerHTML=`<div class="iter-box">
+    <label>${m.title}: drag to see what iterating less (or more) would have meant</label>
+    <input type="range" id="iterRange" min="0" max="${m.steps.length-1}" step="1" value="${cur}">
+    <div class="iter-read" id="iterRead"></div>
+  </div>`;
+  const upd=(fromUser)=>{
+    const i=+document.getElementById('iterRange').value;
+    const alt=JSON.parse(JSON.stringify(lastState));alt[m.key]=m.steps[i];
+    const rr=estimate(alt);
+    const d=(rr.total.p50-lastResult.total.p50)/lastResult.total.p50*100;
+    const sv=lastResult.total.p50-rr.total.p50;
+    document.getElementById('iterRead').innerHTML=`${m.labels[i]} discarded → ≈<b>${fmtVol(rr.total.p50)}</b> <span style="color:${d<=0?'var(--green)':'var(--amber)'}">${d<0?'💧 ≈'+fmtVol(sv)+' saved':(d>=0?'+':'')+Math.round(d)+'% vs your answer'}</span>`;
+    if(fromUser)award('optimiser'); /* badge only for actual interaction */
+  };
+  document.getElementById('iterRange').addEventListener('input',()=>requestAnimationFrame(()=>upd(true)));
+  upd(false);
+}
+function applyWhatIf(opt){
+  const alt=JSON.parse(JSON.stringify(lastState));opt.apply(alt);
+  const rAlt=estimate(alt),r=lastResult;
+  const delta=(rAlt.total.p50-r.total.p50)/r.total.p50;
+  const better=delta<0;
+  const saved=r.total.p50-rAlt.total.p50;
+  document.getElementById('wiCompare').innerHTML=`
+    <div class="wi-cell"><div class="wi-lab">Current</div><div class="wi-num">≈${fmtVol(r.total.p50)}</div></div>
+    <div class="wi-delta ${better?'':'worse'}">${better?'💧 ≈'+fmtVol(saved)+' water saved · −'+Math.abs(Math.round(delta*100))+'%':'≈'+Math.round(delta*100)+'% higher'}</div>
+    <div class="wi-cell"><div class="wi-lab">${opt.t}</div><div class="wi-num">≈${fmtVol(rAlt.total.p50)}</div></div>`;
+  document.getElementById('wiNote').textContent='Both figures are central estimates from the same methodology; the difference is more reliable than either absolute number. Cost, speed and carbon comparisons: not enough reliable data in this prototype.';
+}
+
+function renderMethodology(r){
+  const s=lastState;
+  const act=s.task==='video'?`${r.events[0].count} kept + ${(r.events[1]&&!r.events[1].accepted)?r.events[1].count:0} discarded video attempts, ~${r.events[0].dur}s each`:
+            s.task==='image'?`${r.events.filter(e=>e.modality==='image').reduce((a,e)=>a+e.count,0)} image generation attempts`:
+            s.task==='chat'?`${r.events[0].count} text responses`:`an AI coding session`;
+  const steps=[
+    ['1','Your activity',act+`, on ${r.prov.name}.`],
+    ['2','Estimated compute energy',`≈${r.energy.p50<1?Math.round(r.energy.p50*1000)+' Wh':r.energy.p50.toFixed(1)+' kWh'} of IT energy (P10–P90: ${(r.energy.p10*1000).toFixed(0)}–${(r.energy.p90*1000).toFixed(0)} Wh), resolved from the strongest available evidence: ${r.textDef.grade==='A'&&s.task==='chat'?'a provider production measurement [1]':'independent benchmarks and provider disclosures [2][3][5]'}. The estimator path is recorded per estimate; there is never a universal per-prompt constant.`],
+    ['3','Cooling water',`IT energy × WUE. ${r.wueDef.label}: ${r.wueDef.disp}, consumptive, on-site boundary [8].`],
+    ['4','Electricity water',`IT energy × PUE (${r.pueDef.disp}) × grid water intensity (${INFRA.grid.disp}) [7]. Withdrawal figures are never mixed with consumption figures [6].`],
+    ['5','Uncertainty',`${MC_N.toLocaleString('en-GB')} Monte Carlo scenarios with infrastructure unknowns sampled once per scenario and shared across events. Reported as P10 / P50 / P90: ${fmtVol(r.total.p10)} / ${fmtVol(r.total.p50)} / ${fmtVol(r.total.p90)}.`]
+  ];
+  document.getElementById('methSteps').innerHTML=steps.map(([n,t,p])=>`<div class="meth-step"><h4><span class="n">${n}</span>${t}</h4><p>${p}</p></div>`).join('');
+  const seen=new Set(),rows=[];
+  r.coefs.forEach(c=>{if(!c.label||seen.has(c.label))return;seen.add(c.label);
+    rows.push(`<tr><td>${c.label}</td><td>${c.disp||''}</td><td>${c.boundary||'IT-energy denominator'}</td><td class="grade grade-${c.grade}">${c.grade}</td><td>[${c.ref}]</td></tr>`);
+  });
+  document.querySelector('#coefTable tbody').innerHTML=rows.join('');
+  const usedRefs=[...new Set(r.coefs.map(c=>c.ref))].sort((a,b)=>a-b);
+  document.getElementById('srcList').innerHTML=usedRefs.map(n=>{const s2=REF[n];
+    return `<li><span class="refn">[${n}]</span><b>${s2.title}</b>. ${s2.pub}, ${s2.date}. ${s2.note} <a href="${s2.url}" target="_blank" rel="noopener">source ↗</a></li>`;}).join('');
+  document.getElementById('estJson').textContent=JSON.stringify({
+    estimator:r.estimatorId,
+    reason:r.textDef.grade==='A'&&s.task==='chat'?'Provider production measurement available for this service and modality':'No production measurement for this service and modality; strongest comparable benchmark path selected',
+    data_quality:r.grade,confidence:r.confidence,
+    monte_carlo:{n:MC_N,sampling:'hierarchical, shared infrastructure per scenario'},
+    manifest:METHODOLOGY
+  },null,2);
+}
+
+function renderReceipt(r){
+  const date=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  const names={chat:'My AI research session',image:'My AI images',video:'My AI video',coding:'My AI coding project'};
+  const lines=r.events.map((e,i)=>({l:e.label,v:r.eventMed[i],retry:!e.accepted})).filter(x=>x.v>0.00005);
+  const coolPct=Math.round(r.direct.p50/(r.direct.p50+r.elec.p50)*100);
+  const confTxt={high:'Tight estimate',medium:'Solid range',low:'Wide range · little provider disclosure'};
+  document.getElementById('receipt').innerHTML=`
+    <div class="r-head">AI WATER RECEIPT</div>
+    <div class="r-sub">${names[lastState.task]||'My AI project'} · ${date}</div>
+    <hr>
+    <div style="font-size:11px;letter-spacing:.14em;color:#7c8896;text-align:center;margin-bottom:6px">WHAT WE ESTIMATED</div>
+    ${answerSummary(lastState).map(x=>`<div class="r-line dim"><span>${x.q}</span><span>${x.a}</span></div>`).join('')}
+    <hr>
+    ${lines.map(x=>`<div class="r-line"><span>${x.l}${x.retry?' ↻':''}</span><span>≈${fmtVol(x.v)}</span></div>`).join('')}
+    <hr>
+    <div class="r-total">
+      <div style="font-size:11px;letter-spacing:.14em;color:#7c8896">ESTIMATED TOTAL</div>
+      <div class="t-num">≈${fmtVol(r.total.p50)}</div>
+      <div class="t-range">Almost certainly more than ${fmtVol(r.total.p05)} · up to ${fmtVol(r.total.p90)}</div>
+      <div class="t-range" style="margin-top:6px">${(()=>{const e=equivItems(r.total.p50,1)[0];return e?`${e.ico} ${e.phrase}`:'';})()}</div>
+    </div>
+    <div class="r-conf">● ${confTxt[r.confidence]} · Data quality ${r.grade}</div>
+    <hr>
+    <div class="r-line dim"><span>Cooling</span><span>${coolPct}%</span></div>
+    <div class="r-line dim"><span>Electricity production</span><span>${100-coolPct}%</span></div>
+    <div class="r-foot">Estimated, not directly measured.<br>Water Model v0.3 · sources [1]–[10] at drip · prompt content not collected</div>`;
+}
+
+
+/* =====================================================================
+   EXPERT: PHYSICS TUNER — pinned overrides rerun the full simulation
+===================================================================== */
+let TUNE={};
+function renderTuner(r){
+  TUNE={};
+  ['Pue','Wue','Grid'].forEach(k=>{document.getElementById('tv'+k).textContent='distribution';});
+  const read=document.getElementById('tunerRead');
+  read.innerHTML=`Baseline · P10 <b>${fmtVol(r.total.p10)}</b> · P50 <b>${fmtVol(r.total.p50)}</b> · P90 <b>${fmtVol(r.total.p90)}</b>`;
+  [['slPue','pue','tvPue',v=>v.toFixed(2)],['slWue','wue','tvWue',v=>v.toFixed(2)+' L/kWh'],['slGrid','grid','tvGrid',v=>v.toFixed(2)+' L/kWh']].forEach(([id,key,tv,fmt])=>{
+    const el=document.getElementById(id);
+    el.oninput=()=>{
+      TUNE[key]=+el.value;
+      document.getElementById(tv).textContent='pinned '+fmt(+el.value);
+      requestAnimationFrame(runTuner);
+    };
+  });
+}
+function setBoundary(life){
+  TUNE.lifecycle=life||undefined;
+  document.getElementById('bndCons').classList.toggle('sel',!life);
+  document.getElementById('bndLife').classList.toggle('sel',!!life);
+  runTuner();
+}
+function runTuner(){
+  const alt=estimate(lastState,TUNE);
+  const d=(alt.total.p50-lastResult.total.p50)/lastResult.total.p50*100;
+  const cls=d<0?'delta-down':'delta-up';
+  const bnd=TUNE.lifecycle?' · lifecycle boundary: includes hydropower reservoir evaporation, comparable to UNU-INWEH figures [11]':'';
+  document.getElementById('tunerRead').innerHTML=
+    `Pinned · P10 <b>${fmtVol(alt.total.p10)}</b> · P50 <b>${fmtVol(alt.total.p50)}</b> · P90 <b>${fmtVol(alt.total.p90)}</b> · <span class="${cls}">${d>=0?'+':''}${d.toFixed(0)}% vs baseline P50</span>${bnd}`;
+  if(MODE==='expert')renderDensity(alt);
+  award('optimiser');
+}
+function resetTuner(){
+  document.getElementById('slPue').value=1.12;
+  document.getElementById('slWue').value=0.5;
+  document.getElementById('slGrid').value=1.2;
+  document.getElementById('bndCons').classList.add('sel');
+  document.getElementById('bndLife').classList.remove('sel');
+  renderTuner(lastResult);
+  if(MODE==='expert')renderDensity(lastResult);
+}
+
+/* =====================================================================
+   EXPERT: KERNEL DENSITY PLOT of all Monte Carlo scenarios
+===================================================================== */
+function renderDensity(r){
+  const cv=document.getElementById('kde');
+  if(!cv)return;
+  const wCss=cv.parentElement?cv.parentElement.clientWidth-52:0;
+  if(wCss<80)return; /* hidden (everyday mode) — drawn when expert opens */
+  const dpr=Math.min(devicePixelRatio||1,2),W=wCss,H=240;
+  cv.width=W*dpr;cv.height=H*dpr;cv.style.width=W+'px';cv.style.height=H+'px';
+  const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,W,H);
+  const s=r.samples;
+  const lo=Math.log10(Math.max(pct(s,0.004),1e-9)),hi=Math.log10(pct(s,0.996));
+  const logs=s.map(v=>Math.log10(Math.max(v,1e-9)));
+  const n=logs.length,mean=logs.reduce((a,b)=>a+b)/n;
+  const sd=Math.sqrt(logs.reduce((a,v)=>a+(v-mean)**2,0)/n);
+  const bw=Math.max(1.06*sd*Math.pow(n,-0.2),(hi-lo)/200);
+  /* KDE via histogram convolution (fast enough at 160 bins) */
+  const B=160,hist=new Array(B).fill(0),step=(hi-lo)/B;
+  for(const v of logs){const b=Math.floor((v-lo)/step);if(b>=0&&b<B)hist[b]++;}
+  const kw=Math.max(1,Math.round(bw/step)),dens=new Array(B).fill(0);
+  for(let i=0;i<B;i++){let acc=0,wsum=0;for(let j=-3*kw;j<=3*kw;j++){const k2=Math.exp(-0.5*(j/kw)**2);const ix=i+j;if(ix>=0&&ix<B){acc+=hist[ix]*k2;}wsum+=k2;}dens[i]=acc/wsum;}
+  const dmax=Math.max(...dens);
+  const padB=34,padT=26,plotH=H-padB-padT;
+  const X=i=>(i/(B-1))*W, Y=v=>padT+plotH*(1-v/dmax);
+  /* filled curve */
+  const grad=x.createLinearGradient(0,padT,0,H-padB);
+  grad.addColorStop(0,'rgba(65,211,240,.45)');grad.addColorStop(1,'rgba(65,211,240,.04)');
+  x.beginPath();x.moveTo(0,H-padB);
+  for(let i=0;i<B;i++)x.lineTo(X(i),Y(dens[i]));
+  x.lineTo(W,H-padB);x.closePath();x.fillStyle=grad;x.fill();
+  x.beginPath();for(let i=0;i<B;i++){i?x.lineTo(X(i),Y(dens[i])):x.moveTo(X(i),Y(dens[i]));}
+  x.strokeStyle='rgba(120,220,248,.9)';x.lineWidth=1.6;x.stroke();
+  /* baseline */
+  x.strokeStyle='rgba(140,190,230,.25)';x.lineWidth=1;x.beginPath();x.moveTo(0,H-padB);x.lineTo(W,H-padB);x.stroke();
+  /* percentile markers */
+  const marks=[[0.05,'P5'],[0.1,'P10'],[0.25,'P25'],[0.5,'P50'],[0.75,'P75'],[0.9,'P90']];
+  x.font='10.5px IBM Plex Mono, monospace';x.textAlign='center';
+  marks.forEach(([p,lab],mi)=>{
+    const vx=(Math.log10(pct(s,p))-lo)/(hi-lo)*W;
+    x.strokeStyle=p===0.5?'#41d3f0':'rgba(143,134,242,.55)';
+    x.lineWidth=p===0.5?2:1;
+    x.setLineDash(p===0.5?[]:[3,4]);
+    x.beginPath();x.moveTo(vx,padT-4);x.lineTo(vx,H-padB);x.stroke();x.setLineDash([]);
+    x.fillStyle=p===0.5?'#41d3f0':'#a89ff7';
+    x.fillText(lab,Math.min(Math.max(vx,14),W-14),(mi%2?padT-12:padT-2)+10);
+  });
+  /* x ticks */
+  x.fillStyle='rgba(93,114,136,1)';x.textAlign='center';
+  [0.02,0.5,0.98].forEach(f=>{
+    const lv=lo+(hi-lo)*f;
+    x.fillText(fmtVol(Math.pow(10,lv)),W*f,H-12);
+  });
+  document.getElementById('kdeLeg').innerHTML=
+    marks.map(([p,lab])=>`<span><b>${lab}</b> ${fmtVol(pct(r.samples,p))}</span>`).join('')+`<span>n = ${MC_N.toLocaleString('en-GB')} scenarios · log scale</span>`;
+}
+
+/* =====================================================================
+   SHARE CARD — offscreen canvas PNG (1080×1350), share sheet or download
+===================================================================== */
+const SITE_URL='https://hajduattila.com/drip';
+async function buildShareCard(){
+  const r=lastResult,s=lastState;
+  if(document.fonts&&document.fonts.ready){try{await document.fonts.ready;}catch(e){}}
+  const W=1080,H=1350,c=document.createElement('canvas');c.width=W;c.height=H;
+  const x=c.getContext('2d');
+  /* dark backdrop with the site's cyan glow, paper receipt floating on it */
+  const bg=x.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#0b1728');bg.addColorStop(1,'#050a13');
+  x.fillStyle=bg;x.fillRect(0,0,W,H);
+  const glow=x.createRadialGradient(W/2,H/2,80,W/2,H/2,700);
+  glow.addColorStop(0,'rgba(65,211,240,.15)');glow.addColorStop(1,'rgba(65,211,240,0)');
+  x.fillStyle=glow;x.fillRect(0,0,W,H);
+
+  const names={chat:'My AI research session',image:'My AI images',video:'My AI video',coding:'My AI coding project'};
+  const date=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  const answers=answerSummary(s);
+  const items=r.events.map((e,i)=>({l:e.label+(e.accepted?'':' ↻'),v:r.eventMed[i]})).filter(it=>it.v>0.00005);
+  const eq=equivItems(r.total.p50,1)[0];
+  const confTxt={high:'Tight estimate',medium:'Solid range',low:'Wide range'}[r.confidence];
+  const coolPct=Math.round(r.direct.p50/(r.direct.p50+r.elec.p50)*100);
+
+  const PW=690,PX=(W-PW)/2,PAD=48;
+  const mono=(px,w)=>`${w||400} ${px}px "IBM Plex Mono", monospace`;
+  const disp=(px,w)=>`${w||600} ${px}px "Space Grotesk", sans-serif`;
+  const INK='#16212e',DIM='#7c8896',FAINT='#98a2ad',BLU='#1476b8';
+  const fit=(t,maxW)=>{if(x.measureText(t).width<=maxW)return t;while(t.length>2&&x.measureText(t+'…').width>maxW)t=t.slice(0,-1);return t+'…';};
+  const ls=v=>{try{x.letterSpacing=v;}catch(e){}};
+
+  /* one routine, two passes: dry run measures content height, second paints */
+  function paint(y0,dry){
+    let y=y0;const C=W/2;
+    const ctr=(t,f,col,dy)=>{x.font=f;x.fillStyle=col;x.textAlign='center';if(!dry)x.fillText(t,C,y);y+=dy;};
+    const row=(l,rv,c1,c2,dy)=>{x.font=mono(19);x.textAlign='left';x.fillStyle=c1;if(!dry)x.fillText(fit(l,PW*0.42),PX+PAD,y);x.textAlign='right';x.fillStyle=c2;if(!dry)x.fillText(fit(rv,PW*0.48),PX+PW-PAD,y);y+=dy||36;};
+    const dash=()=>{y+=14;if(!dry){x.strokeStyle='#c6ccd3';x.lineWidth=2;x.setLineDash([6,8]);x.beginPath();x.moveTo(PX+PAD,y);x.lineTo(PX+PW-PAD,y);x.stroke();x.setLineDash([]);}y+=40;};
+    ls('5px');ctr('AI WATER RECEIPT',mono(23,600),INK,38);ls('0px');
+    ctr(`${names[s.task]} · ${date}`,mono(18),DIM,8);
+    dash();
+    ls('3px');ctr('WHAT WE ESTIMATED',mono(14),FAINT,36);ls('0px');
+    answers.forEach(a=>row(a.q,a.a,DIM,INK));
+    dash();
+    items.forEach(it=>row(it.l,'≈'+fmtVol(it.v),INK,INK));
+    dash();
+    ls('3px');ctr('ESTIMATED TOTAL',mono(14),FAINT,78);ls('0px');
+    ctr('≈'+fmtVol(r.total.p50),disp(70,700),INK,50);
+    ctr(`Almost certainly more than ${fmtVol(r.total.p05)} · up to ${fmtVol(r.total.p90)}`,mono(17),DIM,32);
+    if(eq)ctr(`${eq.ico} ${eq.phrase}`,disp(23,500),INK,38);
+    ctr(`● ${confTxt} · Data quality ${r.grade}`,mono(17),DIM,8);
+    dash();
+    row('Cooling',coolPct+'%',DIM,DIM);
+    row('Electricity production',(100-coolPct)+'%',DIM,DIM,10);
+    dash();
+    ctr('Turns out AI has a water bill.',disp(29,600),INK,42);
+    ctr("What's yours?",disp(24,500),INK,38);
+    ctr('Check it at https://hajduattila.com/drip',mono(18,500),BLU,40);
+    ctr('Estimated, not directly measured',mono(14),FAINT,0);
+    return y;
+  }
+  const contentH=paint(0,true);
+  const paperH=Math.min(H-56,contentH+PAD*2.4);
+  const PY=(H-paperH)/2;
+  /* paper with soft drop shadow, same radius family as the site receipt */
+  x.save();
+  x.shadowColor='rgba(0,0,0,.55)';x.shadowBlur=70;x.shadowOffsetY=26;
+  x.fillStyle='#f4f6f8';
+  x.beginPath();x.roundRect(PX,PY,PW,paperH,22);x.fill();
+  x.restore();
+  paint(PY+PAD+30,false);
+  return new Promise(res=>c.toBlob(res,'image/png'));
+}
+
+function triggerDownload(blob){
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='drip-water-receipt.png';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+}
+async function downloadShareCard(){
+  const c=await getCard();
+  triggerDownload(c.blob||await buildShareCard());
+  toast('🖼️ Receipt image saved');
+}
+function shareText(){
+  const r=lastResult,s=lastState;
+  const names={chat:'AI research session',image:'AI image project',video:'AI video',coding:'AI coding project'};
+  const eq=equivItems(r.total.p50,1)[0];
+  return `Turns out AI has a water bill 💧 My ${names[s.task]} used ≈${fmtVol(r.total.p50)}, ${eq?eq.phrase:''} (almost certainly more than ${fmtVol(r.total.p05)}). Estimated, not measured. What's yours? ${SITE_URL}?s=${stateToParam(lastState)}`;
+}
+/* Pre-rendered card cache: built in the background when the result screen
+   loads, so Share opens the native sheet immediately within the tap gesture
+   (Safari requires transient activation). Keyed to the result it was built
+   for, so stale cards can never be shared. */
+let CARD={blob:null,file:null,for:null,building:null};
+function prerenderShareCard(){
+  const mine=lastResult;
+  CARD={blob:null,file:null,for:mine,
+    building:buildShareCard().then(b=>{
+      if(CARD.for===mine&&b){CARD.blob=b;CARD.file=new File([b],'drip-water-receipt.png',{type:'image/png'});}
+      return b;
+    }).catch(()=>null)};
+}
+async function getCard(){
+  if(CARD.for!==lastResult)prerenderShareCard();
+  if(!CARD.blob)await CARD.building;
+  return CARD;
+}
+/* One tap: native share sheet with image + text + challenge link.
+   Falls back to clipboard + download where no sheet exists. */
+async function shareReceipt(){
+  const btn=document.getElementById('shareBtn');const old=btn.textContent;
+  btn.disabled=true;
+  try{
+    let file=(CARD.for===lastResult&&CARD.file)?CARD.file:null;
+    if(!file){btn.textContent='Preparing…';file=(await getCard()).file;}
+    if(!file)throw new Error('card render failed');
+    const txt=shareText();
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file],title:'My AI water receipt',text:txt});}
+      catch(e){if(e.name!=='AbortError')throw e;}
+    }else if(navigator.share){
+      try{await navigator.share({title:'My AI water receipt',text:txt});}
+      catch(e){if(e.name!=='AbortError')throw e;}
+    }else{
+      await navigator.clipboard.writeText(txt);
+      triggerDownload(CARD.blob);
+      toast('📋 Summary copied · receipt image downloaded');
+    }
+  }catch(e){
+    try{const c=(CARD.for===lastResult&&CARD.blob)?CARD.blob:await buildShareCard();
+      triggerDownload(c);toast('🖼️ Receipt image saved');}catch(e2){}
+  }
+  btn.textContent=old;btn.disabled=false;
+}
+
+/* =====================================================================
+   CHALLENGE LINKS — state serialised into the URL
+===================================================================== */
+function stateToParam(s){return btoa(unescape(encodeURIComponent(JSON.stringify(s)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function paramToState(p){try{return JSON.parse(decodeURIComponent(escape(atob(p.replace(/-/g,'+').replace(/_/g,'/')))));}catch(e){return null;}}
+function copyChallenge(){
+  const url=`${SITE_URL}?s=${stateToParam(lastState)}`;
+  navigator.clipboard.writeText(url).then(()=>{
+    const b=document.getElementById('chBtn');const old=b.textContent;b.textContent='Link copied ✓';setTimeout(()=>b.textContent=old,1800);
+  });
+}
+(function readChallenge(){
+  let param=null;
+  try{param=new URLSearchParams(location.search).get('s');}catch(e){}
+  if(!param)return;
+  const st=paramToState(param);
+  if(!st||!st.task||!STEP_DEFS.task.opts.some(o=>o.v===st.task))return;
+  try{
+    const r=estimate(st);
+    const names={chat:'research session',image:'image project',video:'video',coding:'coding project'};
+    const el=document.getElementById('challenge');
+    el.classList.remove('hidden');
+    el.innerHTML=`<span class="ch-ico">🏁</span>
+      <div class="ch-body">Someone's AI ${names[st.task]} used <b>≈${fmtVol(r.total.p50)}</b> of water, almost certainly more than ${fmtVol(r.total.p05)}. Think your workflow uses less?
+      <div class="ch-sub">Same methodology, same sources. Only the answers differ.</div></div>
+      <button class="btn btn-primary btn-small" onclick="startCalcTask('${st.task}')">Take the challenge</button>`;
+  }catch(e){}
+})();
+
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&!document.getElementById('view-about').classList.contains('hidden'))closeAbout();
+});
+
+/* Hero animations pause when the diagram is off-screen or on another view,
+   so its fan/turbine/particle timelines never compete with scrolling. */
+(function(){
+  const mech=document.getElementById('mech'),svg=document.getElementById('mechSvg');
+  if(!mech||!svg||!('IntersectionObserver' in window))return;
+  const rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const io=new IntersectionObserver(es=>es.forEach(e=>{
+    if(e.isIntersecting&&!rm){mech.classList.add('anim');try{svg.unpauseAnimations();}catch(_){}}
+    else{mech.classList.remove('anim');try{svg.pauseAnimations();}catch(_){}}
+  }),{threshold:0.05});
+  io.observe(mech);
+})();
+
+/* init */
+go('home');
+if(matchMedia('(prefers-reduced-motion: reduce)').matches){
+  document.getElementById('mech').classList.remove('anim');
+  const svg=document.getElementById('mechSvg');
+  if(svg&&svg.pauseAnimations)svg.pauseAnimations();
+}
+</script>
+</body>
+</html>

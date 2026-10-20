@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import {estimateSession,buildEvents} from '../assets/drip-model.js';
+const base={task:'image',provider:'unsure',exactImages:4,versions:'few',upscale:'no'};
+test('kept images, discarded attempts and prompt overhead follow Drip source',()=>{const e=buildEvents(base);assert.equal(e[0].count,4);assert.equal(e[1].count,2);assert.equal(e[2].count,7);});
+test('same scenario is repeatable and has ordered percentiles',()=>{const a=estimateSession(base),b=estimateSession(base);assert.equal(a.total.p50,b.total.p50);assert.ok(a.total.p05<a.total.p10&&a.total.p10<a.total.p50&&a.total.p50<a.total.p90);assert.equal(a.samples.length,8000);});
+test('discarded generations and higher image counts increase the footprint',()=>{const none=estimateSession({...base,versions:'none'}),few=estimateSession(base),lots=estimateSession({...base,versions:'lots'}),more=estimateSession({...base,exactImages:12});assert.ok(none.total.p50<few.total.p50&&few.total.p50<lots.total.p50&&more.total.p50>few.total.p50);});
+test('water is nonnegative for all supported input counts and attempt settings',()=>{for(const n of [1,4,12])for(const v of ['none','few','lots']){const r=estimateSession({...base,exactImages:n,versions:v});assert.ok(Number.isFinite(r.total.p90)&&r.total.p05>0);assert.ok(r.direct.p50>0&&r.elec.p50>0);}});
+test('extracted model reproduces the original engine with the identical random sequence',()=>{const html=fs.readFileSync(new URL('../drip/index.html',import.meta.url),'utf8');const src=html.slice(html.indexOf('const REFS = ['),html.indexOf('/* Formatting */'));let seed=73421;const random=()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};const math=Object.create(Math);math.random=random;const context=vm.createContext({Math:math,state:base});const original=vm.runInContext(src+'\nestimate(state);',context);const result=estimateSession(base);for(const q of ['p05','p10','p50','p90'])assert.equal(result.total[q],original.total[q]);});
